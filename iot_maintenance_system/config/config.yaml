@@ -1,0 +1,89 @@
+database:
+  data_dir: "./data"
+  raw_data: "./data/raw_telemetry.parquet"
+  processed_data: "./data/processed_features.parquet"
+  labels_data: "./data/labels.parquet"
+
+devices:
+  types:
+    - "Switch"
+    - "Camera"
+    - "Sensor"
+  zones:
+    - "Zone-A"
+    - "Zone-B"
+    - "Zone-C"
+    - "Zone-D"
+  total_devices: 150
+
+telemetry:
+  sampling_interval_minutes: 15
+  history_window_days: 730  # 2 years
+  sensors:
+    - "cpu_utilization"
+    - "memory_used"
+    - "temperature"
+    - "packet_loss"
+    - "bandwidth_util"
+    - "ping_latency"
+    - "poe_voltage"
+    - "ambient_temperature"
+    - "humidity"
+    - "vibration_score"
+
+features:
+  rolling_windows:
+    - 1h
+    - 6h
+    - 24h
+    - 7d
+
+models:
+  survival:
+    path: "./models/weibull_aft_v1.pkl"
+    model_type: "WeibullAFT"
+    
+  classification:
+    path: "./models/xgboost_rca_v1.pkl"
+    model_type: "XGBClassifier"
+    
+  scaler:
+    path: "./models/scaler_v1.pkl"
+
+failure_modes:
+  classes:
+    - "Hardware_Burnout"
+    - "Firmware_Crash"
+    - "Network_Interface"
+    - "Power_Supply"
+    - "Environmental"
+    - "No_Failure"
+
+alerting:
+  risk_thresholds:
+    CRITICAL:
+      probability_7d: 0.75
+      ttf_days: 7
+    HIGH:
+      probability_14d: 0.50
+      ttf_days: 14
+    MEDIUM:
+      probability_30d: 0.30
+      ttf_days: 30
+    LOW:
+      probability_90d: 0.10
+      ttf_days: 90
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8501
+  refresh_interval_seconds: 60
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
