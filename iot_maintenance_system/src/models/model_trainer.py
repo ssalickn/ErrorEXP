@@ -141,39 +141,27 @@ class ModelTrainingPipeline:
         """
         Train XGBoost for multi-class failure mode classification
         """
-        # Encode class labels (string -> numeric)
-        from sklearn.preprocessing import LabelEncoder
-        label_encoder = LabelEncoder()
-        y_encoded = label_encoder.fit_transform(y)
-        self.label_encoder = label_encoder
+        # Create a direct class mapping (string -> numeric starting from 0)
+        unique_classes = np.unique(y)
+        class_map = {cls: idx for idx, cls in enumerate(sorted(unique_classes))}
+        self.class_map = class_map
+        self.class_map_inv = {idx: cls for cls, idx in class_map.items()}
         
-        # Split data
-        X_train, X_val, y_train, y_val = train_test_split(
-            X, y_encoded,
-            test_size=0.2,
-            stratify=y_encoded,
-            random_state=42
-        )
+        # Encode using the direct mapping
+        y_encoded = np.array([class_map[label] for label in y])
         
-        # Scale
-        X_train_scaled = self.feature_scaler.transform(X_train)
-        X_val_scaled = self.feature_scaler.transform(X_val)
-        
-        # Compute class weights for imbalance
-        from sklearn.utils.class_weight import compute_class_weight
-        
-        classes = np.unique(y_train)
-        class_weights = compute_class_weight('balanced', classes=classes, y=y_train)
-        weight_dict = {i: w for i, w in enumerate(class_weights)}
+        # For small datasets with rare classes, train on all data
+        # (cross-validation will be done separately for validation)
+        X_train_scaled = self.feature_scaler.transform(X)
         
         logger.info(f"   Class distribution (train):")
-        for mode_idx in np.unique(y_train):
-            count = np.sum(y_train == mode_idx)
-            pct = count / len(y_train) * 100
-            mode_name = label_encoder.inverse_transform([mode_idx])[0]
+        for mode_idx in np.unique(y_encoded):
+            count = np.sum(y_encoded == mode_idx)
+            pct = count / len(y_encoded) * 100
+            mode_name = self.class_map_inv[mode_idx]
             logger.info(f"      {mode_name}: {count} ({pct:.1f}%)")
         
-        # Train XGBoost
+        # Train XGBoost on all data (for production, use all available training data)
         self.classification_model = xgb.XGBClassifier(
             n_estimators=500,
             max_depth=6,
@@ -181,31 +169,13 @@ class ModelTrainingPipeline:
             min_child_weight=1,
             subsample=0.8,
             colsample_bytree=0.8,
-            scale_pos_weight=weight_dict.get(1, 1),
             eval_metric='mlogloss',
-            early_stopping_rounds=50,
             random_state=42,
             n_jobs=-1,
             verbosity=0
         )
         
-        self.classification_model.fit(
-            X_train_scaled, y_train,
-            eval_set=[(X_val_scaled, y_val)],
-            verbose=False
-        )
-        
-        # Validation performance
-        y_pred = self.classification_model.predict(X_val_scaled)
-        
-        f1_weighted = f1_score(y_val, y_pred, average='weighted', zero_division=0)
-        precision = precision_score(y_val, y_pred, average='weighted', zero_division=0)
-        recall = recall_score(y_val, y_pred, average='weighted', zero_division=0)
-        
-        logger.info(f"   Validation Performance (Weighted):")
-        logger.info(f"      F1-Score: {f1_weighted:.4f}")
-        logger.info(f"      Precision: {precision:.4f}")
-        logger.info(f"      Recall: {recall:.4f}")
+        self.classification_model.fit(X_train_scaled, y_encoded)
         
         # Feature importance
         feature_importance = pd.DataFrame({
@@ -221,7 +191,8 @@ class ModelTrainingPipeline:
         """
         Cross-validation and detailed metrics
         """
-        y_encoded = self.label_encoder.transform(y)
+        # Encode using the class map
+        y_encoded = np.array([self.class_map[label] for label in y])
         X_scaled = self.feature_scaler.transform(X)
         
         # Use 2-fold split since minority classes contain only 2 entities
