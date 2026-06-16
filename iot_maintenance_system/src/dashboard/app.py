@@ -110,7 +110,18 @@ def main():
     features = load_features_data()
     labels = load_labels_data()
     
-    if not all([models, telemetry, features, labels]) or features is None:
+    # Check if all data was loaded successfully
+    data_missing = (
+        models is None or 
+        telemetry is None or 
+        features is None or 
+        labels is None or
+        telemetry.empty or
+        features.empty or
+        labels.empty
+    )
+    
+    if data_missing:
         st.error("❌ Required data not found. Please verify paths or run the full pipeline first:")
         st.code("""
 python src/data_pipeline/data_generator.py
