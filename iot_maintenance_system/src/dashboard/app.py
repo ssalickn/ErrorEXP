@@ -10,8 +10,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 import joblib
-import requests
-import sys
+from pathlib import Path
 from typing import Dict, List
 
 # Page config
@@ -22,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS styling
 st.markdown("""
 <style>
     .metric-card {
@@ -46,66 +45,73 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ==================== PATH CONFIGURATION ====================
+# Dynamically resolve root directories relative to this file's path
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent  # Points safely to iot_maintenance_system/
+
+DATA_DIR = PROJECT_ROOT / "data"
+MODEL_DIR = PROJECT_ROOT / "models"
+
 # ==================== SESSION STATE & CACHING ====================
 
 @st.cache_resource
 def load_models():
-    """Load trained models"""
+    """Load trained models with absolute path tracking"""
     try:
-        scaler = joblib.load('../models/scaler_v1.pkl')
-        survival = joblib.load('../models/weibull_aft_v1.pkl')
-        classification = joblib.load('../models/xgboost_rca_v1.pkl')
-        feature_names = joblib.load('../models/feature_names_v1.pkl')
+        scaler = joblib.load(MODEL_DIR / 'scaler_v1.pkl')
+        survival = joblib.load(MODEL_DIR / 'weibull_aft_v1.pkl')
+        classification = joblib.load(MODEL_DIR / 'xgboost_rca_v1.pkl')
+        feature_names = joblib.load(MODEL_DIR / 'feature_names_v1.pkl')
         return {
             'scaler': scaler,
             'survival': survival,
             'classification': classification,
             'feature_names': feature_names
         }
-    except:
-        st.error("⚠️ Failed to load models. Run training first.")
+    except Exception as e:
+        st.sidebar.error(f"Failed to load models: {str(e)}")
         return None
 
 @st.cache_data
 def load_telemetry_data():
     """Load telemetry data"""
     try:
-        return pd.read_parquet('../data/raw_telemetry.parquet')
-    except:
+        return pd.read_parquet(DATA_DIR / 'raw_telemetry.parquet')
+    except Exception as e:
         return None
 
 @st.cache_data
 def load_features_data():
     """Load engineered features"""
     try:
-        return pd.read_parquet('../data/processed_features.parquet')
-    except:
+        return pd.read_parquet(DATA_DIR / 'processed_features.parquet')
+    except Exception as e:
         return None
 
 @st.cache_data
 def load_labels_data():
     """Load failure labels"""
     try:
-        return pd.read_parquet('../data/labels.parquet')
-    except:
+        return pd.read_parquet(DATA_DIR / 'labels.parquet')
+    except Exception as e:
         return None
 
 # ==================== MAIN DASHBOARD ====================
 
 def main():
-    
     # Header
     st.markdown("# 🏭 Industrial IoT Predictive Maintenance Dashboard")
     st.markdown("Real-time failure prediction and root cause analysis for switches, cameras, and sensors")
     
-    # Load data
+    # Load data dependencies
     models = load_models()
     telemetry = load_telemetry_data()
     features = load_features_data()
     labels = load_labels_data()
     
-    if not all([models, telemetry, features, labels]):
-        st.error("❌ Required data not found. Please run the full pipeline first:")
+    if not all([models, telemetry, features, labels]) or features is None:
+        st.error("❌ Required data not found. Please verify paths or run the full pipeline first:")
         st.code("""
 python src/data_pipeline/data_generator.py
 python src/data_pipeline/feature_engineer.py
@@ -120,7 +126,7 @@ python src/models/model_trainer.py
         ["📊 Dashboard", "⚠️ Alerts", "🔍 Device Details", "📈 Analytics", "ℹ️ Model Info"]
     )
     
-    # Render selected page
+    # Render selected page view context
     if page == "📊 Dashboard":
         show_dashboard(features, labels, models)
     elif page == "⚠️ Alerts":
@@ -134,378 +140,157 @@ python src/models/model_trainer.py
 
 
 def show_dashboard(features: pd.DataFrame, labels: pd.DataFrame, models: Dict):
-    """Main dashboard view"""
-    
+    """Main overview panel"""
     st.header("System Overview")
     
-    # Key metrics
+    # Key metrics calculation layout
     col1, col2, col3, col4 = st.columns(4)
-    
     total_devices = len(features)
-    failed_devices = len(labels)
+    failed_devices = len(labels) if labels is not None else 0
     failure_rate = (failed_devices / total_devices * 100) if total_devices > 0 else 0
     
     with col1:
-        st.metric("Total Devices", total_devices, delta=None)
+        st.metric("Total Active Devices", total_devices, delta=None)
     with col2:
-        st.metric("Failed Devices", failed_devices, delta=f"{failure_rate:.1f}%")
+        st.metric("Logged Failed Devices", failed_devices, f"{failure_rate:.1f}% Risk Rate")
     with col3:
         avg_ttf = features['ttf_days'].mean() if 'ttf_days' in features else 0
-        st.metric("Avg TTF (days)", f"{avg_ttf:.0f}")
+        st.metric("Avg Expected TTF", f"{avg_ttf:.0f} Days")
     with col4:
         recent_failures = len(labels[
-            labels['failure_timestamp'] > 
-            datetime.now() - timedelta(days=30)
-        ]) if not labels.empty else 0
-        st.metric("Failures (30d)", recent_failures)
+            labels['failure_timestamp'] > (datetime.now() - timedelta(days=30))
+        ]) if (labels is not None and not labels.empty) else 0
+        st.metric("Failures (Last 30d)", recent_failures)
     
-    # Risk distribution pie chart
     col1, col2 = st.columns(2)
-    
     with col1:
         st.subheader("Device Distribution by Type")
         device_counts = features['device_type'].value_counts()
-        fig = px.pie(
-            names=device_counts.index,
-            values=device_counts.values,
-            title="Devices by Type"
-        )
+        fig = px.pie(names=device_counts.index, values=device_counts.values, hole=0.4)
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        st.subheader("Failures by Mode")
-        if not labels.empty:
+        st.subheader("Failures by Specific Mode")
+        if labels is not None and not labels.empty and 'failure_mode' in labels.columns:
             failure_modes = labels['failure_mode'].value_counts()
-            fig = px.pie(
-                names=failure_modes.index,
-                values=failure_modes.values,
-                title="Failure Distribution"
-            )
+            fig = px.pie(names=failure_modes.index, values=failure_modes.values, hole=0.4)
             st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No categorical breakdown logs available.")
+            
+    # Key Risk Indicator metrics
+    st.subheader("Top System Risks Factors")
+    risk_cols = ['temp_persistence', 'voltage_volatility', 'packet_loss_trend', 'memory_pressure']
+    valid_risk_cols = [c for c in risk_cols if c in features.columns]
     
-    # Top risk factors
-    st.subheader("Top Risk Factors (Global)")
-    
-    if 'device_age_days' in features:
-        feature_correlations = {
-            'temp_persistence': features['temp_persistence'].mean(),
-            'voltage_volatility': features['voltage_volatility'].mean(),
-            'packet_loss_trend': features['packet_loss_trend'].mean(),
-            'memory_pressure': features['memory_pressure'].mean(),
-            'device_age_days': features['device_age_days'].mean() / 365,  # Convert to years
-        }
-        
-        risk_factors = pd.DataFrame(
-            list(feature_correlations.items()),
-            columns=['Factor', 'Average Value']
-        ).sort_values('Average Value', ascending=False)
-        
-        fig = px.bar(
-            risk_factors.head(10),
-            x='Average Value',
-            y='Factor',
-            orientation='h',
-            title="Key Risk Indicators"
-        )
+    if valid_risk_cols:
+        mean_risks = features[valid_risk_cols].mean().reset_index()
+        mean_risks.columns = ['Risk Metric', 'Mean Intensity Value']
+        fig = px.bar(mean_risks, x='Mean Intensity Value', y='Risk Metric', orientation='h', color='Mean Intensity Value')
         st.plotly_chart(fig, use_container_width=True)
-    
-    # Failure timeline
-    st.subheader("Failure Timeline (Last 90 Days)")
-    
-    if not labels.empty:
-        labels['date'] = pd.to_datetime(labels['failure_timestamp']).dt.date
-        failure_timeline = labels[
-            labels['failure_timestamp'] > datetime.now() - timedelta(days=90)
-        ].groupby('date').size().reset_index(name='count')
-        
-        if not failure_timeline.empty:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=failure_timeline['date'],
-                y=failure_timeline['count'],
-                mode='lines+markers',
-                fill='tozeroy',
-                name='Failures'
-            ))
-            fig.update_layout(title="Daily Failures", xaxis_title="Date", yaxis_title="Count")
-            st.plotly_chart(fig, use_container_width=True)
 
 
 def show_alerts(features: pd.DataFrame, models: Dict):
-    """Alert view"""
-    
+    """Alert review module"""
     st.header("⚠️ Critical & High-Risk Alerts")
     
-    # Risk scoring (simplified)
-    features['risk_score'] = (
-        features['temp_persistence'] * 0.25 +
-        features['voltage_volatility'] * 0.15 +
-        features['packet_loss_mean_24h'] * 0.15 +
-        features['memory_pressure'] * 0.20 +
-        features['device_age_log'] * 0.15 +
-        features['thermal_shock_events'] / 100 * 0.10
-    )
+    # Secure feature references dynamically
+    risk_score = np.zeros(len(features))
+    if 'temp_persistence' in features.columns: risk_score += features['temp_persistence'] * 0.25
+    if 'voltage_volatility' in features.columns: risk_score += (features['voltage_volatility'] / 10.0).clip(0, 1) * 0.15
+    if 'memory_pressure' in features.columns: risk_score += features['memory_pressure'] * 0.25
+    if 'device_age_days' in features.columns: risk_score += (features['device_age_days'] / 1460.0).clip(0, 1) * 0.35
     
+    features['risk_score'] = risk_score
     features['risk_level'] = pd.cut(
         features['risk_score'],
-        bins=[0, 0.3, 0.5, 0.7, 1.0],
+        bins=[-0.01, 0.25, 0.50, 0.70, 1.01],
         labels=['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
     )
     
-    # Filter alerts
-    risk_filter = st.selectbox(
-        "Filter by Risk Level",
-        ["CRITICAL", "HIGH", "MEDIUM", "LOW"]
-    )
-    
-    alerts_filtered = features[features['risk_level'] == risk_filter].sort_values(
-        'risk_score', ascending=False
-    )
+    risk_filter = st.selectbox("Filter Workspace Alert Context", ["CRITICAL", "HIGH", "MEDIUM", "LOW"])
+    alerts_filtered = features[features['risk_level'] == risk_filter].sort_values('risk_score', ascending=False)
     
     if alerts_filtered.empty:
-        st.info(f"✓ No {risk_filter} alerts")
+        st.info(f"✓ Zero active assets flagged with {risk_filter} risk thresholds.")
         return
-    
-    st.subheader(f"{len(alerts_filtered)} {risk_filter} Alerts")
-    
-    # Display alerts
-    for idx, (_, device) in enumerate(alerts_filtered.head(20).iterrows()):
         
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
+    st.subheader(f"Current Asset Backlog: {len(alerts_filtered)} {risk_filter} Alerts")
+    
+    for _, device in alerts_filtered.head(10).iterrows():
+        col1, col2, col3 = st.columns([1.5, 2, 1])
         with col1:
-            risk_color = {
-                'CRITICAL': '🔴',
-                'HIGH': '🟠',
-                'MEDIUM': '🟡',
-                'LOW': '🟢'
-            }
-            st.markdown(f"### {risk_color[device['risk_level']]} {device['device_id']}")
-            st.caption(f"{device['device_type']} • {device['zone']}")
-        
+            icon = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢'}[risk_filter]
+            st.markdown(f"### {icon} Asset: {device['device_id']}")
+            st.caption(f"Profile: {device['device_type']} | Cluster Zone: {device['zone']}")
         with col2:
-            col2a, col2b = st.columns(2)
-            with col2a:
-                st.metric("Risk Score", f"{device['risk_score']:.2f}", delta=None)
-            with col2b:
-                st.metric("Days to Failure", f"{device.get('ttf_days', 'N/A')}")
-            
-            # Top factors
-            factors = []
-            if device['temp_persistence'] > 0.5:
-                factors.append("🌡️ High thermal stress")
-            if device['voltage_volatility'] > 1.5:
-                factors.append("⚡ Power instability")
-            if device['packet_loss_mean_24h'] > 1:
-                factors.append("📡 Network degradation")
-            if device['memory_pressure'] > 0.8:
-                factors.append("💾 Memory pressure")
-            if device['device_age_days'] > 1460:
-                factors.append("📅 Device aging")
-            
-            if factors:
-                st.write("**Contributing Factors:**")
-                for factor in factors[:3]:
-                    st.caption(f"• {factor}")
-        
+            sub_a, sub_b = st.columns(2)
+            sub_a.metric("Calculated Risk", f"{device['risk_score']:.2f}")
+            sub_b.metric("Remaining Est. Days", f"{device.get('ttf_days', 'N/A'):.1f}" if isinstance(device.get('ttf_days'), (int, float)) else "N/A")
         with col3:
-            st.button(
-                "View Details",
-                key=f"btn_{device['device_id']}",
-                disabled=False
-            )
-        
+            st.write("")
+            st.button("Request Backend Trace", key=f"btn_{device['device_id']}")
         st.divider()
 
 
-def show_device_details(telemetry: pd.DataFrame, features: pd.DataFrame, 
-                       labels: pd.DataFrame, models: Dict):
-    """Device details view"""
+def show_device_details(telemetry: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame, models: Dict):
+    """Device tracking sub-module"""
+    st.header("🔍 Individual Device Telemetry Breakdown")
     
-    st.header("🔍 Device Deep Dive")
+    selected_id = st.selectbox("Isolate Active Hardware Identifier", sorted(features['device_id'].unique()))
+    if not selected_id: return
     
-    # Device selector
-    device_id = st.selectbox(
-        "Select Device",
-        sorted(features['device_id'].unique()),
-        key="device_selector"
-    )
+    dev_features = features[features['device_id'] == selected_id].iloc[0]
+    dev_telemetry = telemetry[telemetry['device_id'] == selected_id].sort_values('timestamp') if telemetry is not None else pd.DataFrame()
     
-    if not device_id:
-        return
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Asset Classification", str(dev_features['device_type']))
+    c2.metric("Operational Zone", str(dev_features['zone']))
+    c3.metric("Running Service Lifespan", f"{(dev_features['device_age_days']/365.0):.2f} Years")
     
-    # Get device data
-    device_features = features[features['device_id'] == device_id].iloc[0]
-    device_telemetry = telemetry[telemetry['device_id'] == device_id]
-    device_failures = labels[labels['device_id'] == device_id]
-    
-    # Device info
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Device Type", device_features['device_type'])
-    with col2:
-        st.metric("Zone", device_features['zone'])
-    with col3:
-        age_days = device_features['device_age_days']
-        st.metric("Age", f"{age_days/365:.1f} years")
-    
-    st.divider()
-    
-    # Telemetry trends
-    st.subheader("Recent Telemetry Trends")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if 'temperature' in device_telemetry:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=device_telemetry['timestamp'],
-                y=device_telemetry['temperature'],
-                mode='lines',
-                name='Temperature',
-                fill='tozeroy'
-            ))
-            fig.update_layout(
-                title="Temperature (°C)",
-                xaxis_title="Time",
-                yaxis_title="Temperature"
-            )
+    if not dev_telemetry.empty:
+        st.subheader("Recent Sensor Signals Trends")
+        metric_choices = [c for c in ['temperature', 'voltage', 'cpu_utilization', 'packet_loss'] if c in dev_telemetry.columns]
+        chosen_metric = st.selectbox("Isolate Signal Vector", metric_choices)
+        
+        if chosen_metric:
+            fig = px.line(dev_telemetry, x='timestamp', y=chosen_metric, title=f"Real-time Stream: {chosen_metric}")
             st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        if 'cpu_utilization' in device_telemetry:
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=device_telemetry['timestamp'],
-                y=device_telemetry['cpu_utilization'],
-                mode='lines',
-                name='CPU',
-                fill='tozeroy'
-            ))
-            fig.update_layout(
-                title="CPU Utilization (%)",
-                xaxis_title="Time",
-                yaxis_title="CPU %"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-    
-    # Risk factors
-    st.subheader("Risk Factors")
-    
-    risk_factors = {
-        'Thermal Stress': device_features.get('temp_persistence', 0),
-        'Power Instability': device_features.get('voltage_volatility', 0),
-        'Network Degradation': device_features.get('packet_loss_mean_24h', 0),
-        'Memory Pressure': device_features.get('memory_pressure', 0),
-        'Device Aging': device_features.get('device_age_log', 0) / 10,  # Scale
-    }
-    
-    fig = px.bar(
-        x=list(risk_factors.keys()),
-        y=list(risk_factors.values()),
-        labels={'y': 'Risk Score', 'x': 'Factor'}
-    )
-    fig.update_layout(title="Risk Factor Breakdown")
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Failure history
-    if not device_failures.empty:
-        st.subheader("Failure History")
-        st.dataframe(
-            device_failures[['failure_timestamp', 'failure_mode']].head(5),
-            use_container_width=True
-        )
+    else:
+        st.info("No raw historical timeseries signals tracked for this asset framework.")
 
 
 def show_analytics(labels: pd.DataFrame, features: pd.DataFrame):
-    """Analytics view"""
-    
-    st.header("📈 System Analytics")
-    
-    if labels.empty:
-        st.info("No failure data yet")
+    """Aggregated Analytics"""
+    st.header("📈 System Failure Analytics")
+    if labels is None or labels.empty:
+        st.info("Operational logs report clear anomalies across telemetry metrics.")
         return
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Failures by Device Type")
-        failure_by_type = labels.groupby('device_type').size()
-        fig = px.bar(
-            x=failure_by_type.index,
-            y=failure_by_type.values,
-            labels={'x': 'Device Type', 'y': 'Count'},
-            title="Failure Count by Device Type"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col2:
-        st.subheader("Failures by Zone")
-        failure_by_zone = labels.groupby('zone').size()
-        fig = px.bar(
-            x=failure_by_zone.index,
-            y=failure_by_zone.values,
-            labels={'x': 'Zone', 'y': 'Count'},
-            title="Failure Count by Zone"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Failure mode trends
-    st.subheader("Failure Mode Distribution")
-    if 'failure_mode' in labels:
-        mode_counts = labels['failure_mode'].value_counts()
-        fig = px.bar(
-            x=mode_counts.index,
-            y=mode_counts.values,
-            labels={'x': 'Failure Mode', 'y': 'Count'}
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        
+    c1, c2 = st.columns(2)
+    with c1:
+        if 'device_type' in labels.columns:
+            counts = labels['device_type'].value_counts().reset_index()
+            st.plotly_chart(px.bar(counts, x='device_type', y='count', title="Failure Incidents across Profile types"), use_container_width=True)
+    with c2:
+        if 'zone' in labels.columns:
+            counts = labels['zone'].value_counts().reset_index()
+            st.plotly_chart(px.bar(counts, x='zone', y='count', title="Failure Geolocation Distributions"), use_container_width=True)
 
 
 def show_model_info(models: Dict, features: pd.DataFrame):
-    """Model information view"""
+    """Model framework metadata registry review"""
+    st.header("ℹ️ Model Architecture Metadata")
     
-    st.header("ℹ️ Model Information")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Models")
-        st.write("""
-        - **Stage 1**: Weibull AFT (Time-to-Failure)
-        - **Stage 2**: XGBoost (Failure Mode Classification)
-        - **Explainability**: SHAP
-        """)
-    
-    with col2:
-        st.subheader("Features")
-        st.metric("Total Features", len(models['feature_names']))
-        
-    st.subheader("Feature List")
-    feature_df = pd.DataFrame({
-        'Feature': models['feature_names']
-    })
-    st.dataframe(feature_df, use_container_width=True)
-    
-    st.subheader("About")
     st.markdown("""
-    This system predicts industrial IoT device failures using:
-    
-    - **Domain-specific features** tailored to switches, cameras, and sensors
-    - **Survival analysis** to estimate time-to-failure
-    - **Multi-class classification** to identify failure modes
-    - **SHAP explanations** for model interpretability
-    - **Real-time inference** via FastAPI
-    - **Interactive monitoring** via Streamlit
-    
-    **Failure Modes:**
-    - Hardware Burnout (thermal degradation)
-    - Firmware Crash (software/memory issues)
-    - Network Interface Failure (port degradation)
-    - Power Supply Issues (voltage instability)
-    - Environmental Factors (cooling, humidity, vibration)
+    ### System Pipeline Architecture
+    * **Stage 1 (Proactive Lifespan Prediction):** Parametric Weibull Accelerated Failure Time (AFT) Regression Engine.
+    * **Stage 2 (Root-Cause Diagnosis Classification):** Multi-Class Tree Gradient-Boosted Classifier Framework (`XGBoost`).
+    * **Model Explainability Engine:** Algorithmic SHAP (SHapley Additive exPlanations) Vector Interrogations.
     """)
+    
+    st.subheader("Model Input Features Mapping Matrix")
+    st.dataframe(pd.DataFrame({'Registered Feature Name': models['feature_names']}), use_container_width=True)
 
 
 if __name__ == "__main__":

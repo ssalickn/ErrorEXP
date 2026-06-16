@@ -17,7 +17,7 @@ import json
 # Import custom modules
 import sys
 sys.path.insert(0, '../models')
-from explainability import ExplainabilityEngine
+from src.models.explainability import ExplainabilityEngine
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
