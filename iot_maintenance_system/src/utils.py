@@ -175,8 +175,8 @@ def calculate_asset_criticality(device_type: str, zone: str) -> str:
     if device_type == "Camera" and zone in ["Zone-A", "Zone-B"]:
         return "HIGH"
     
-    # Sensors are generally lower priority
-    if device_type == "Sensor":
+    # Access controls and access points are generally medium priority
+    if device_type in ["Access Control", "Access Point"]:
         return "MEDIUM"
     
     return "LOW"
@@ -221,7 +221,8 @@ def estimate_maintenance_cost(failure_mode: str, device_type: str) -> Dict[str, 
     device_costs = {
         'Switch': 5000,
         'Camera': 2000,
-        'Sensor': 500
+        'Access Control': 1500,
+        'Access Point': 3000
     }
     
     # Downtime multipliers

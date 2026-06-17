@@ -16,7 +16,7 @@ from typing import Dict, List
 # Page config
 st.set_page_config(
     page_title="IoT Maintenance Monitor",
-    page_icon="🏭",
+    page_icon="chart_with_upwards_trend",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -101,8 +101,8 @@ def load_labels_data():
 
 def main():
     # Header
-    st.markdown("# 🏭 Industrial IoT Predictive Maintenance Dashboard")
-    st.markdown("Real-time failure prediction and root cause analysis for switches, cameras, and sensors")
+    st.markdown("# Industrial IoT Predictive Maintenance Dashboard")
+    st.markdown("Real-time failure prediction and root cause analysis for network infrastructure devices")
     
     # Load data dependencies
     models = load_models()
@@ -122,7 +122,7 @@ def main():
     )
     
     if data_missing:
-        st.error("❌ Required data not found. Please verify paths or run the full pipeline first:")
+        st.error("Required data not found. Please verify paths or run the full pipeline first:")
         st.code("""
 python src/data_pipeline/data_generator.py
 python src/data_pipeline/feature_engineer.py
@@ -134,19 +134,19 @@ python src/models/model_trainer.py
     st.sidebar.title("Navigation")
     page = st.sidebar.radio(
         "Select View",
-        ["📊 Dashboard", "⚠️ Alerts", "🔍 Device Details", "📈 Analytics", "ℹ️ Model Info"]
+        ["Dashboard", "Alerts", "Device Details", "Analytics", "Model Information"]
     )
     
     # Render selected page view context
-    if page == "📊 Dashboard":
+    if page == "Dashboard":
         show_dashboard(features, labels, models)
-    elif page == "⚠️ Alerts":
+    elif page == "Alerts":
         show_alerts(features, models)
-    elif page == "🔍 Device Details":
+    elif page == "Device Details":
         show_device_details(telemetry, features, labels, models)
-    elif page == "📈 Analytics":
+    elif page == "Analytics":
         show_analytics(labels, features)
-    elif page == "ℹ️ Model Info":
+    elif page == "Model Information":
         show_model_info(models, features)
 
 
@@ -190,8 +190,8 @@ def show_dashboard(features: pd.DataFrame, labels: pd.DataFrame, models: Dict):
             st.info("No categorical breakdown logs available.")
             
     # Key Risk Indicator metrics
-    st.subheader("Top System Risks Factors")
-    risk_cols = ['temp_persistence', 'voltage_volatility', 'packet_loss_trend', 'memory_pressure']
+    st.subheader("Top System Risk Factors")
+    risk_cols = ['voltage_volatility', 'packet_loss_trend', 'memory_pressure', 'device_age_days']
     valid_risk_cols = [c for c in risk_cols if c in features.columns]
     
     if valid_risk_cols:
@@ -203,50 +203,71 @@ def show_dashboard(features: pd.DataFrame, labels: pd.DataFrame, models: Dict):
 
 def show_alerts(features: pd.DataFrame, models: Dict):
     """Alert review module"""
-    st.header("⚠️ Critical & High-Risk Alerts")
+    st.header("Device Alerts & Risk Assessment")
     
-    # Secure feature references dynamically
+    # Secure feature references dynamically - focus on infrastructure metrics only
     risk_score = np.zeros(len(features))
-    if 'temp_persistence' in features.columns: risk_score += features['temp_persistence'] * 0.25
-    if 'voltage_volatility' in features.columns: risk_score += (features['voltage_volatility'] / 10.0).clip(0, 1) * 0.15
-    if 'memory_pressure' in features.columns: risk_score += features['memory_pressure'] * 0.25
+    if 'voltage_volatility' in features.columns: risk_score += (features['voltage_volatility'] / 10.0).clip(0, 1) * 0.25
+    if 'packet_loss_trend' in features.columns: risk_score += (features['packet_loss_trend'] / 0.5).clip(0, 1) * 0.20
+    if 'memory_pressure' in features.columns: risk_score += features['memory_pressure'] * 0.20
     if 'device_age_days' in features.columns: risk_score += (features['device_age_days'] / 1460.0).clip(0, 1) * 0.35
     
     features['risk_score'] = risk_score
     features['risk_level'] = pd.cut(
         features['risk_score'],
         bins=[-0.01, 0.25, 0.50, 0.70, 1.01],
-        labels=['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+        labels=['Low', 'Medium', 'High', 'Critical']
     )
     
-    risk_filter = st.selectbox("Filter Workspace Alert Context", ["CRITICAL", "HIGH", "MEDIUM", "LOW"])
+    # Initialize session state for alert filter
+    if 'alert_filter' not in st.session_state:
+        st.session_state.alert_filter = 'Critical'
+    
+    # Filter buttons
+    st.markdown("### Filter by Risk Level")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("Critical", use_container_width=True):
+            st.session_state.alert_filter = 'Critical'
+    with col2:
+        if st.button("High", use_container_width=True):
+            st.session_state.alert_filter = 'High'
+    with col3:
+        if st.button("Medium", use_container_width=True):
+            st.session_state.alert_filter = 'Medium'
+    with col4:
+        if st.button("Low", use_container_width=True):
+            st.session_state.alert_filter = 'Low'
+    
+    risk_filter = st.session_state.alert_filter
     alerts_filtered = features[features['risk_level'] == risk_filter].sort_values('risk_score', ascending=False)
     
     if alerts_filtered.empty:
-        st.info(f"✓ Zero active assets flagged with {risk_filter} risk thresholds.")
+        st.info(f"No devices detected with {risk_filter.lower()} risk status.")
         return
-        
-    st.subheader(f"Current Asset Backlog: {len(alerts_filtered)} {risk_filter} Alerts")
     
-    for _, device in alerts_filtered.head(10).iterrows():
-        col1, col2, col3 = st.columns([1.5, 2, 1])
-        with col1:
-            icon = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🟢'}[risk_filter]
-            st.markdown(f"### {icon} Asset: {device['device_id']}")
-            st.caption(f"Profile: {device['device_type']} | Cluster Zone: {device['zone']}")
-        with col2:
-            sub_a, sub_b = st.columns(2)
-            sub_a.metric("Calculated Risk", f"{device['risk_score']:.2f}")
-            sub_b.metric("Remaining Est. Days", f"{device.get('ttf_days', 'N/A'):.1f}" if isinstance(device.get('ttf_days'), (int, float)) else "N/A")
-        with col3:
-            st.write("")
-            st.button("Request Backend Trace", key=f"btn_{device['device_id']}")
-        st.divider()
+    st.markdown(f"### {risk_filter} Priority Alerts")
+    st.markdown(f"**Total: {len(alerts_filtered)} device(s)**")
+    
+    # Create table display
+    display_data = []
+    for _, device in alerts_filtered.iterrows():
+        display_data.append({
+            'Device ID': device['device_id'],
+            'Device Type': device['device_type'],
+            'Location': device['zone'],
+            'Risk Score': f"{device['risk_score']:.2f}",
+            'Est. Days to Failure': f"{device.get('ttf_days', 'N/A'):.1f}" if isinstance(device.get('ttf_days'), (int, float)) else "N/A"
+        })
+    
+    alert_df = pd.DataFrame(display_data)
+    st.dataframe(alert_df, use_container_width=True, hide_index=True)
 
 
 def show_device_details(telemetry: pd.DataFrame, features: pd.DataFrame, labels: pd.DataFrame, models: Dict):
     """Device tracking sub-module"""
-    st.header("🔍 Individual Device Telemetry Breakdown")
+    st.header("Device Telemetry Analysis")
     
     selected_id = st.selectbox("Isolate Active Hardware Identifier", sorted(features['device_id'].unique()))
     if not selected_id: return
@@ -260,22 +281,22 @@ def show_device_details(telemetry: pd.DataFrame, features: pd.DataFrame, labels:
     c3.metric("Running Service Lifespan", f"{(dev_features['device_age_days']/365.0):.2f} Years")
     
     if not dev_telemetry.empty:
-        st.subheader("Recent Sensor Signals Trends")
-        metric_choices = [c for c in ['temperature', 'voltage', 'cpu_utilization', 'packet_loss'] if c in dev_telemetry.columns]
-        chosen_metric = st.selectbox("Isolate Signal Vector", metric_choices)
+        st.subheader("Telemetry Metrics Trends")
+        metric_choices = [c for c in ['voltage', 'cpu_utilization', 'packet_loss', 'bandwidth_util', 'ping_latency'] if c in dev_telemetry.columns]
+        chosen_metric = st.selectbox("Select Metric", metric_choices)
         
         if chosen_metric:
-            fig = px.line(dev_telemetry, x='timestamp', y=chosen_metric, title=f"Real-time Stream: {chosen_metric}")
+            fig = px.line(dev_telemetry, x='timestamp', y=chosen_metric, title=f"{chosen_metric.title()} Over Time")
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No raw historical timeseries signals tracked for this asset framework.")
+        st.info("No telemetry data available for this device.")
 
 
 def show_analytics(labels: pd.DataFrame, features: pd.DataFrame):
     """Aggregated Analytics"""
-    st.header("📈 System Failure Analytics")
+    st.header("System Failure Analytics")
     if labels is None or labels.empty:
-        st.info("Operational logs report clear anomalies across telemetry metrics.")
+        st.info("No failure data available.")
         return
         
     c1, c2 = st.columns(2)
@@ -291,7 +312,7 @@ def show_analytics(labels: pd.DataFrame, features: pd.DataFrame):
 
 def show_model_info(models: Dict, features: pd.DataFrame):
     """Model framework metadata registry review"""
-    st.header("ℹ️ Model Architecture Metadata")
+    st.header("Model Information")
     
     st.markdown("""
     ### System Pipeline Architecture

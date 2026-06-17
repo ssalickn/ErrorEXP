@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class IoTDataGenerator:
     """Generate synthetic IoT device telemetry with realistic failure signatures"""
     
-    DEVICE_TYPES = ["Switch", "Camera", "Sensor"]
+    DEVICE_TYPES = ["Switch", "Camera", "Access Control", "Access Point"]
     ZONES = ["Zone-A", "Zone-B", "Zone-C", "Zone-D"]
     FAILURE_MODES = ["Hardware_Burnout", "Firmware_Crash", "Network_Interface", 
                      "Power_Supply", "Environmental"]
@@ -40,7 +40,7 @@ class IoTDataGenerator:
             "ping_latency": 8,
             "poe_voltage": 48.0,
         },
-        "Sensor": {
+        "Access Control": {
             "cpu_utilization": 20,
             "memory_used": 30,
             "temperature": 40,
@@ -48,6 +48,15 @@ class IoTDataGenerator:
             "bandwidth_util": 15,
             "ping_latency": 3,
             "poe_voltage": 12.0,
+        },
+        "Access Point": {
+            "cpu_utilization": 40,
+            "memory_used": 50,
+            "temperature": 48,
+            "packet_loss": 0.08,
+            "bandwidth_util": 50,
+            "ping_latency": 6,
+            "poe_voltage": 48.0,
         }
     }
     
@@ -117,12 +126,14 @@ class IoTDataGenerator:
     
     def _assign_device_type(self, index: int) -> str:
         """Assign device type based on distribution"""
-        if index % 3 == 0:
+        if index % 4 == 0:
             return "Switch"
-        elif index % 3 == 1:
+        elif index % 4 == 1:
             return "Camera"
+        elif index % 4 == 2:
+            return "Access Control"
         else:
-            return "Sensor"
+            return "Access Point"
     
     def _generate_failure_pattern(
         self, device_type: str, install_date: datetime
