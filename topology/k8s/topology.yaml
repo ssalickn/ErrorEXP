@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: topology-refresh
+spec:
+  schedule: "15 * * * *"  # top of every hour
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: topology
+              image: errordet/topology:latest
+              args: ["--config-dir", "/app/topology/config", "--var-dir", "/app/var"]
+              envFrom:
+                - secretRef:
+                    name: topology-secrets
+              volumeMounts:
+                - name: var
+                  mountPath: /app/var
+          volumes:
+            - name: var
+              persistentVolumeClaim:
+                claimName: topology-var
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: topology-api
+spec:
+  selector:
+    app: topology-api
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: topology-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: topology-api
+  template:
+    metadata:
+      labels:
+        app: topology-api
+    spec:
+      containers:
+        - name: api
+          image: errordet/topology:latest
+          command: ["uvicorn", "topology.validation.api:app", "--host", "0.0.0.0", "--port", "8080"]
+          envFrom:
+            - secretRef:
+                name: topology-secrets

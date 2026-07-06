@@ -1,0 +1,107 @@
+"""
+Master automation script.
+Runs the complete pipeline:
+  1. Export new emails from Outlook
+  2. Parse emails into iot.device_logs
+  3. Run cascade miner (optional)
+
+Usage:
+    python run_pipeline.py
+    python run_pipeline.py --skip-export     # parse only (for testing)
+    python run_pipeline.py --skip-parse       # export only
+    python run_pipeline.py --skip-cascade     # skip cascade mining
+"""
+
+import argparse
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).parent
+OUTLOOK_FOLDER = r"C:\Logs\outlook_inbox"
+EML_FOLDER = r"C:\Users\saleem.salick\Downloads\Logs\Logs"
+
+
+def run_script(cmd: list, name: str) -> bool:
+    """Run a subprocess and return success status."""
+    print(f"\n{'=' * 60}")
+    print(f"[{datetime.now().isoformat()}] Running: {name}")
+    print(f"Command: {' '.join(cmd)}")
+    print("=" * 60)
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(SCRIPT_DIR),
+            capture_output=True,
+            text=True,
+            timeout=600,  # 10 min max per step
+        )
+        print(result.stdout)
+        if result.stderr:
+            print("STDERR:", result.stderr)
+        return result.returncode == 0
+    except subprocess.TimeoutExpired:
+        print(f"✗ {name} timed out after 10 minutes")
+        return False
+    except Exception as e:
+        print(f"✗ {name} failed: {e}")
+        return False
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--skip-export', action='store_true')
+    ap.add_argument('--skip-parse', action='store_true')
+    ap.add_argument('--skip-cascade', action='store_true')
+    ap.add_argument('--mailbox', help='Shared mailbox name')
+    args = ap.parse_args()
+    
+    overall_success = True
+    
+    # STEP 1: Export from Outlook
+    if not args.skip_export:
+        cmd = [
+            sys.executable,
+            str(SCRIPT_DIR / "auto_export_outlook.py"),
+            "--once",
+            "--output", OUTLOOK_FOLDER,
+        ]
+        if args.mailbox:
+            cmd.extend(["--mailbox", args.mailbox])
+        
+        if not run_script(cmd, "Outlook Export"):
+            overall_success = False
+    else:
+        print("Skipping export step")
+    
+    # STEP 2: Parse emails
+    if not args.skip_parse and overall_success:
+        cmd = [
+            sys.executable,
+            str(SCRIPT_DIR / "extract_eml_logs.py"),
+            "--folder", OUTLOOK_FOLDER,
+        ]
+        if not run_script(cmd, "Parse Emails"):
+            overall_success = False
+    else:
+        print("Skipping parse step")
+    
+    # STEP 3: Cascade mine (placeholder - we'll write this next)
+    if not args.skip_cascade and overall_success:
+        cmd = [
+            sys.executable,
+            str(SCRIPT_DIR / "cascade_miner.py"),
+        ]
+        run_script(cmd, "Cascade Mining")  # Don't fail pipeline if this fails
+    
+    print("\n" + "=" * 60)
+    print(f"[{datetime.now().isoformat()}] Pipeline {'SUCCESS' if overall_success else 'PARTIAL FAILURE'}")
+    print("=" * 60)
+    
+    return 0 if overall_success else 1
+
+
+if __name__ == "__main__":
+    exit(main())

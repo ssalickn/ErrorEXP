@@ -1,0 +1,4 @@
+2026-06-29 14:17:02,511 [INFO] ============================================================
+2026-06-29 14:17:02,511 [INFO] Starting Outlook export cycle
+2026-06-29 14:37:30,787 [ERROR] Outlook connection failed: (-2147352567, 'Exception occurred.', (4096, 'Microsoft Outlook', 'Cannot complete the operation. You are not connected.', None, 0, -2147352567), None)
+2026-06-29 14:37:30,861 [INFO] State saved: {'last_run': '2026-06-29T14:37:30.848318', 'exported_count': 0, 'output_folder': 'C:\\Logs\\outlook_inbox'}

@@ -1,0 +1,96 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+#app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #334155;
+}
+
+h1 { font-size: 24px; margin: 0; }
+
+#status { display: flex; gap: 16px; align-items: center; font-size: 14px; }
+
+#ws-status.connected { color: #22c55e; }
+#ws-status.disconnected { color: #ef4444; }
+
+#kpis {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: #1e293b;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #334155;
+}
+
+.kpi-card.online { border-left: 4px solid #22c55e; }
+.kpi-card.offline { border-left: 4px solid #ef4444; }
+.kpi-card.degraded { border-left: 4px solid #f59e0b; }
+.kpi-card.critical { border-left: 4px solid #ef4444; }
+
+.kpi-label { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; }
+.kpi-value { display: block; font-size: 28px; font-weight: bold; margin-top: 4px; }
+
+section {
+  background: #1e293b;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #334155;
+}
+
+section h2 { font-size: 18px; margin: 0 0 12px 0; }
+
+#event-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 90px 80px 200px 1fr;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  align-items: center;
+}
+
+.event.critical { background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; }
+.event.warning { background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; }
+.event.info { background: rgba(34, 197, 94, 0.05); border-left: 3px solid #22c55e; }
+
+.event-time { color: #94a3b8; font-family: monospace; }
+.event-severity { font-weight: bold; }
+.event-device { color: #60a5fa; font-family: monospace; }
+.event-message { color: #cbd5e1; }
+
+#graph {
+  width: 100%;
+  height: 600px;
+  background: #0f172a;
+  border-radius: 4px;
+}

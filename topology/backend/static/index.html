@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IoT Topology Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🔧 IoT Topology Monitor</h1>
+      <div id="status">
+        <span id="ws-status" class="disconnected">● Disconnected</span>
+        <span id="last-update">Never</span>
+      </div>
+    </header>
+
+    <!-- KPI Cards -->
+    <section id="kpis">
+      <div class="kpi-card" id="kpi-total">
+        <span class="kpi-label">Devices</span>
+        <span class="kpi-value">—</span>
+      </div>
+      <div class="kpi-card online" id="kpi-online">
+        <span class="kpi-label">Online</span>
+        <span class="kpi-value">—</span>
+      </div>
+      <div class="kpi-card offline" id="kpi-offline">
+        <span class="kpi-label">Offline</span>
+        <span class="kpi-value">—</span>
+      </div>
+      <div class="kpi-card degraded" id="kpi-degraded">
+        <span class="kpi-label">Degraded</span>
+        <span class="kpi-value">—</span>
+      </div>
+      <div class="kpi-card" id="kpi-edges">
+        <span class="kpi-label">Edges</span>
+        <span class="kpi-value">—</span>
+      </div>
+      <div class="kpi-card critical" id="kpi-critical">
+        <span class="kpi-label">Critical (24h)</span>
+        <span class="kpi-value">—</span>
+      </div>
+    </section>
+
+    <!-- Live Event Feed -->
+    <section id="events">
+      <h2>🚨 Live Events</h2>
+      <div id="event-list"></div>
+    </section>
+
+    <!-- Topology Graph -->
+    <section id="topology">
+      <h2>🕸️ Topology</h2>
+      <svg id="graph" width="100%" height="600"></svg>
+    </section>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

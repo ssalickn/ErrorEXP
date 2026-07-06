@@ -1,0 +1,12 @@
+"""Example targets file for `tier1.snmp_crawl`."""
+switches:
+  - device_id: SW-CORE-07
+    ip: 10.10.0.7
+    snmp_version: v2c
+    community: public
+  - device_id: SW-ACC-12
+    ip: 10.10.0.12
+    snmp_version: v3
+    v3_user: topology
+    v3_auth_key: changeit
+    v3_priv_key: changeit

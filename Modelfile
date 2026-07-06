@@ -1,0 +1,14 @@
+# Pull from the cloud endpoint base
+FROM minimax-m3:cloud
+
+# Set the context window to 512k tokens (M3 supports up to 1M)
+PARAMETER num_ctx 512000
+PARAMETER num_predict 128000
+
+# Optimal inference parameters recommended by MiniMax
+PARAMETER temperature 1.0
+PARAMETER top_p 0.95
+PARAMETER top_k 40
+
+# Custom system prompt to tune it for deep terminal/coding execution
+SYSTEM You are an autonomous coding agent. Use step-by-step thinking to analyze complex tasks before executing.
