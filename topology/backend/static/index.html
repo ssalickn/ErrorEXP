@@ -15,38 +15,54 @@
       </div>
     </header>
 
-    <!-- KPI Cards -->
+    <!-- KPI Cards (clickable drill-down) -->
     <section id="kpis">
-      <div class="kpi-card" id="kpi-total">
+      <button class="kpi-card" id="kpi-total" data-filter="all" title="Show all devices">
         <span class="kpi-label">Devices</span>
         <span class="kpi-value">—</span>
-      </div>
-      <div class="kpi-card online" id="kpi-online">
+      </button>
+      <button class="kpi-card online" id="kpi-online" data-filter="status:online" title="Show online devices">
         <span class="kpi-label">Online</span>
         <span class="kpi-value">—</span>
-      </div>
-      <div class="kpi-card offline" id="kpi-offline">
+      </button>
+      <button class="kpi-card offline" id="kpi-offline" data-filter="status:offline" title="Show offline devices">
         <span class="kpi-label">Offline</span>
         <span class="kpi-value">—</span>
-      </div>
-      <div class="kpi-card degraded" id="kpi-degraded">
+      </button>
+      <button class="kpi-card degraded" id="kpi-degraded" data-filter="status:degraded" title="Show degraded devices">
         <span class="kpi-label">Degraded</span>
         <span class="kpi-value">—</span>
-      </div>
-      <div class="kpi-card" id="kpi-edges">
+      </button>
+      <button class="kpi-card" id="kpi-edges" data-filter="edges" title="Scroll to topology graph">
         <span class="kpi-label">Edges</span>
         <span class="kpi-value">—</span>
-      </div>
-      <div class="kpi-card critical" id="kpi-critical">
+      </button>
+      <button class="kpi-card critical" id="kpi-critical" data-filter="events:critical" title="Show critical events from the last 24 hours">
         <span class="kpi-label">Critical (24h)</span>
         <span class="kpi-value">—</span>
-      </div>
+      </button>
     </section>
 
     <!-- Live Event Feed -->
     <section id="events">
       <h2>🚨 Live Events</h2>
       <div id="event-list"></div>
+    </section>
+
+    <!-- Drill-down table (populated by KPI clicks, type chips, or topology node clicks) -->
+    <section id="drilldown">
+      <div class="drilldown-header">
+        <h2>🔎 Drill-down</h2>
+        <div class="drilldown-controls">
+          <span class="muted">Filter by type:</span>
+          <div id="device-type-chips" class="type-chips">
+            <span class="muted">Loading…</span>
+          </div>
+        </div>
+      </div>
+      <div id="drilldown-table-container">
+        <p class="muted">Click a KPI card above, a device type, or a node in the topology to see the matching devices here.</p>
+      </div>
     </section>
 
     <!-- Topology Graph -->

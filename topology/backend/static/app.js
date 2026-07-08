@@ -258,6 +258,329 @@ function flashBrowserNotification(event) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// DRILL-DOWN
+// Unified table that can be populated by:
+//   - KPI card clicks       (e.g. "Online" → status:online devices)
+//   - Device-type chip clicks (e.g. "switch" → all switches)
+//   - Topology node clicks  (a single device)
+// Filters are mutually exclusive: clicking a new control replaces the
+// current filter. Clicking the same control again clears the filter.
+// ═══════════════════════════════════════════════════════════
+
+// Active filter shape: { kind: 'all' | 'status' | 'type' | 'device' | 'events' | 'edges', value?: string }
+let activeFilter = null;
+
+function applyFilter(filter) {
+  // Toggle off if same filter is clicked again
+  if (activeFilter && filter && activeFilter.kind === filter.kind && activeFilter.value === filter.value) {
+    activeFilter = null;
+  } else {
+    activeFilter = filter;
+  }
+
+  // Update KPI card "selected" styling
+  document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
+
+  if (!activeFilter) {
+    clearDrilldown();
+    renderDeviceTypeChips(); // refresh active styling on chips
+    return;
+  }
+
+  if (activeFilter.kind === "edges") {
+    // Edges aren't a device table — scroll to the topology section instead
+    document.getElementById("topology")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    clearDrilldown();
+    renderDeviceTypeChips();
+    return;
+  }
+
+  // Highlight the matching KPI card
+  if (activeFilter.kind === "all" || activeFilter.kind === "status" || activeFilter.kind === "events") {
+    const kpi = document.querySelector(`.kpi-card[data-filter="${cssEscapeAttr(activeFilter.kind + (activeFilter.value ? ":" + activeFilter.value : ""))}"]`);
+    if (kpi) kpi.classList.add("kpi-active");
+  }
+
+  renderDeviceTypeChips(); // refresh chip active styling
+  renderDrilldownTable();
+}
+
+function clearDrilldown() {
+  const container = document.getElementById("drilldown-table-container");
+  if (!container) return;
+  container.innerHTML = '<p class="muted">Click a KPI card above, a device type, or a node in the topology to see the matching devices here.</p>';
+}
+
+function renderDeviceTypeChips() {
+  const container = document.getElementById("device-type-chips");
+  if (!container) return;
+
+  const counts = new Map();
+  state.devices.forEach((d) => {
+    const t = d.device_type || "unknown";
+    counts.set(t, (counts.get(t) || 0) + 1);
+  });
+
+  if (counts.size === 0) {
+    container.innerHTML = '<span class="muted">No devices loaded yet.</span>';
+    return;
+  }
+
+  const types = Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  container.innerHTML = types
+    .map(([type, count]) => {
+      const isActive = activeFilter && activeFilter.kind === "type" && activeFilter.value === type;
+      return `<button class="type-chip${isActive ? " active" : ""}" data-type="${escapeAttr(type)}">
+                <span class="type-name">${escapeHtml(type)}</span>
+                <span class="type-count">${count}</span>
+              </button>`;
+    })
+    .join("");
+
+  container.querySelectorAll(".type-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      applyFilter({ kind: "type", value: btn.getAttribute("data-type") });
+    });
+  });
+}
+
+async function renderDrilldownTable() {
+  const container = document.getElementById("drilldown-table-container");
+  if (!container || !activeFilter) return;
+
+  // Title for the panel
+  let title = "";
+  if (activeFilter.kind === "all") title = "All devices";
+  else if (activeFilter.kind === "status") title = `Devices with status: ${activeFilter.value}`;
+  else if (activeFilter.kind === "type") title = `Devices of type: ${activeFilter.value}`;
+  else if (activeFilter.kind === "device") title = `Device: ${activeFilter.value}`;
+  else if (activeFilter.kind === "events") title = `Critical events (last ${activeFilter.hoursBack || 24}h)`;
+
+  container.innerHTML = `
+    <div class="table-header">
+      <strong>${escapeHtml(title)}</strong>
+      <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
+    </div>
+    <p class="muted">Loading…</p>
+  `;
+
+  document.getElementById("drilldown-clear")?.addEventListener("click", () => {
+    activeFilter = null;
+    document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
+    renderDeviceTypeChips();
+    clearDrilldown();
+  });
+
+  try {
+    if (activeFilter.kind === "events") {
+      await renderEventsTable(container, title);
+    } else {
+      await renderDevicesTable(container, title);
+    }
+  } catch (e) {
+    console.error("Failed to load drill-down:", e);
+    container.innerHTML = `<p class="error">Failed to load: ${escapeHtml(String(e))}</p>`;
+  }
+}
+
+async function renderDevicesTable(container, title) {
+  // Build query string from active filter
+  const params = new URLSearchParams();
+  params.set("limit", "10000");
+  if (activeFilter.kind === "status") params.set("status", activeFilter.value);
+  else if (activeFilter.kind === "type") params.set("device_type", activeFilter.value);
+  // "all" and "device" → no filter (we'll filter client-side for the single device)
+
+  const res = await fetch(`/api/devices?${params.toString()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  let devices = await res.json();
+
+  if (activeFilter.kind === "device") {
+    devices = devices.filter((d) => d.device_id === activeFilter.value);
+  }
+
+  if (!devices.length) {
+    container.innerHTML = `
+      <div class="table-header">
+        <strong>${escapeHtml(title)}</strong>
+        <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
+      </div>
+      <p class="muted">No devices match this filter.</p>
+    `;
+    document.getElementById("drilldown-clear")?.addEventListener("click", () => {
+      activeFilter = null;
+      document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
+      renderDeviceTypeChips();
+      clearDrilldown();
+    });
+    return;
+  }
+
+  const preferred = ["device_id", "device_name", "device_type", "vendor", "model", "status", "ip_address", "mac_address", "site_id", "last_seen"];
+  const seen = new Set(preferred);
+  const columns = [...preferred];
+  devices.forEach((d) => {
+    Object.keys(d).forEach((k) => {
+      if (!seen.has(k)) {
+        seen.add(k);
+        columns.push(k);
+      }
+    });
+  });
+
+  const thead = `<thead><tr>${columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${devices
+    .map(
+      (d) =>
+        `<tr>${columns
+          .map((c) => {
+            const v = d[c];
+            if (v === null || v === undefined || v === "") return `<td class="muted">—</td>`;
+            if (c === "status") return `<td><span class="status-pill status-${escapeAttr(String(v))}">${escapeHtml(String(v))}</span></td>`;
+            if (c === "last_seen") {
+              const dt = new Date(v);
+              return `<td>${isNaN(dt) ? escapeHtml(String(v)) : escapeHtml(dt.toLocaleString())}</td>`;
+            }
+            return `<td>${escapeHtml(String(v))}</td>`;
+          })
+          .join("")}</tr>`
+    )
+    .join("")}</tbody>`;
+
+  container.innerHTML = `
+    <div class="table-header">
+      <strong>${escapeHtml(title)}</strong>
+      <span class="muted">${devices.length} device${devices.length === 1 ? "" : "s"}</span>
+      <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
+    </div>
+    <div class="table-wrap">
+      <table class="device-table">${thead}${tbody}</table>
+    </div>
+  `;
+
+  document.getElementById("drilldown-clear")?.addEventListener("click", () => {
+    activeFilter = null;
+    document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
+    renderDeviceTypeChips();
+    clearDrilldown();
+  });
+}
+
+async function renderEventsTable(container, title) {
+  const params = new URLSearchParams();
+  params.set("severity", activeFilter.value);
+  params.set("hours_back", String(activeFilter.hoursBack || 24));
+  params.set("limit", "200");
+
+  const res = await fetch(`/api/events?${params.toString()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const events = await res.json();
+
+  if (!events.length) {
+    container.innerHTML = `
+      <div class="table-header">
+        <strong>${escapeHtml(title)}</strong>
+        <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
+      </div>
+      <p class="muted">No ${escapeHtml(activeFilter.value)} events in the last ${activeFilter.hoursBack || 24}h.</p>
+    `;
+    document.getElementById("drilldown-clear")?.addEventListener("click", () => {
+      activeFilter = null;
+      document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
+      renderDeviceTypeChips();
+      clearDrilldown();
+    });
+    return;
+  }
+
+  const columns = ["event_time", "device_id", "device_type", "severity", "status", "status_code", "message", "source_system"];
+  const thead = `<thead><tr>${columns.map((c) => `<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>`;
+  const tbody = `<tbody>${events
+    .map((e) => {
+      return `<tr>${columns
+        .map((c) => {
+          const v = e[c];
+          if (v === null || v === undefined || v === "") return `<td class="muted">—</td>`;
+          if (c === "event_time") {
+            const dt = new Date(v);
+            return `<td>${isNaN(dt) ? escapeHtml(String(v)) : escapeHtml(dt.toLocaleString())}</td>`;
+          }
+          if (c === "severity") return `<td><span class="status-pill status-${escapeAttr(String(v))}">${escapeHtml(String(v))}</span></td>`;
+          return `<td>${escapeHtml(String(v))}</td>`;
+        })
+        .join("")}</tr>`;
+    })
+    .join("")}</tbody>`;
+
+  container.innerHTML = `
+    <div class="table-header">
+      <strong>${escapeHtml(title)}</strong>
+      <span class="muted">${events.length} event${events.length === 1 ? "" : "s"}</span>
+      <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
+    </div>
+    <div class="table-wrap">
+      <table class="device-table">${thead}${tbody}</table>
+    </div>
+  `;
+
+  document.getElementById("drilldown-clear")?.addEventListener("click", () => {
+    activeFilter = null;
+    document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
+    renderDeviceTypeChips();
+    clearDrilldown();
+  });
+}
+
+function cssEscapeAttr(s) {
+  // For the [data-filter="..."] attribute selector; safe for the values we use
+  return s.replace(/"/g, '\\"');
+}
+
+// Wire up KPI card clicks
+function wireKpiCards() {
+  document.querySelectorAll(".kpi-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const f = card.getAttribute("data-filter");
+      if (!f) return;
+      let filter;
+      if (f === "all") filter = { kind: "all" };
+      else if (f === "edges") filter = { kind: "edges" };
+      else if (f.startsWith("status:")) filter = { kind: "status", value: f.split(":")[1] };
+      else if (f.startsWith("events:")) filter = { kind: "events", value: f.split(":")[1], hoursBack: 24 };
+      applyFilter(filter);
+    });
+  });
+}
+
+// Hook into the existing data load: when devices/topology finish, refresh the chips
+const _origLoadInitialData = loadInitialData;
+loadInitialData = async function () {
+  await _origLoadInitialData();
+  renderDeviceTypeChips();
+  wireKpiCards();
+  // If a filter is active, re-render the drill-down with the latest data
+  if (activeFilter && activeFilter.kind !== "edges") renderDrilldownTable();
+};
+
+// ═══════════════════════════════════════════════════════════
+// UTIL
+// ═══════════════════════════════════════════════════════════
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s);
+}
+
+// ═══════════════════════════════════════════════════════════
 // STARTUP
 // ═══════════════════════════════════════════════════════════
 

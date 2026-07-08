@@ -23,237 +23,121 @@
     html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text);
                  font-family: -apple-system, "Segoe UI", system-ui, sans-serif; }
     header { padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--border);
-             display: flex; align-items: center; gap: 16px; }
+             display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     header h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
     header .badge { background: var(--accent); color: #fff; font-size: 11px;
                     padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+    
+    .kpi-card { background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+                padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+                display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+                font-family: inherit; }
+    .kpi-card:hover { border-color: var(--accent); background: #243454; }
+    .kpi-card.active { border-color: var(--accent); background: var(--accent); }
+    .kpi-card b { font-size: 13px; }
+    .kpi-card.active b, .kpi-card.active span { color: #fff !important; }
+
     header .spacer { flex: 1; }
-    header .stat { font-size: 12px; color: var(--muted); }
-    header .stat b { color: var(--text); font-size: 13px; }
-    main { display: grid; grid-template-columns: 1fr 360px; height: calc(100% - 49px); }
+    header .ws-status { font-size: 11px; padding: 2px 8px; border-radius: 8px; }
+    header .ws-status.connected { background: var(--good); color: #fff; }
+    header .ws-status.disconnected { background: var(--bad); color: #fff; }
+    header .last-update { font-size: 11px; color: var(--muted); }
+    
+    main { display: grid; grid-template-columns: 1fr 380px; height: calc(100% - 49px); }
     #graph { background: var(--bg); }
     aside { background: var(--panel); border-left: 1px solid var(--border);
-            padding: 14px 16px; overflow-y: auto; }
+            padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
     aside h2 { font-size: 12px; text-transform: uppercase; color: var(--muted);
-               letter-spacing: 0.6px; margin: 0 0 10px 0; }
-    .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px;
-                  margin: 4px 0; }
-    .swatch { width: 14px; height: 4px; border-radius: 2px; }
-    .swatch.active { background: var(--accent); }
-    .swatch.inferred { background: var(--warn); }
-    .swatch.review { background: var(--bad); }
-    .controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
-    .controls button { background: var(--panel-2); color: var(--text);
-                       border: 1px solid var(--border); padding: 5px 10px;
-                       border-radius: 4px; font-size: 11px; cursor: pointer; }
-    .controls button:hover { background: #2a3a5c; }
-    .controls button.active { background: var(--accent); border-color: var(--accent); }
-    .controls input { background: var(--panel-2); color: var(--text);
-                      border: 1px solid var(--border); padding: 5px 10px;
-                      border-radius: 4px; font-size: 12px; flex: 1; min-width: 100px; }
-    .device-list { list-style: none; margin: 0; padding: 0; }
-    .device-list li { padding: 7px 10px; border-radius: 4px; cursor: pointer;
+               letter-spacing: 0.6px; margin: 0; }
+    
+    .search-box { width: 100%; background: var(--panel-2); color: var(--text);
+                  border: 1px solid var(--border); padding: 6px 10px;
+                  border-radius: 4px; font-size: 12px; font-family: inherit; }
+    
+    .drilldown { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+    
+    .device-list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto;
+                   border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
+    .device-list li { padding: 7px 10px; cursor: pointer; border-bottom: 1px solid var(--border);
                       font-size: 12px; display: flex; align-items: center; gap: 8px; }
+    .device-list li:last-child { border-bottom: none; }
     .device-list li:hover { background: var(--panel-2); }
-    .device-list li.selected { background: var(--accent); }
+    .device-list li.selected { background: var(--accent); color: #fff; }
+    .device-list li.selected .dot { box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
     .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .dot.online { background: var(--good); }
     .dot.degraded { background: var(--warn); }
     .dot.offline { background: var(--bad); }
+    .dot.unknown { background: var(--muted); }
+    
+    .chips-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chip { background: var(--panel-2); border: 1px solid var(--border); font-size: 11px;
+            padding: 3px 8px; border-radius: 12px; cursor: pointer; color: var(--muted);
+            transition: all 0.15s; }
+    .chip:hover { border-color: var(--muted); color: var(--text); }
+    .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
     .detail { background: var(--panel-2); border: 1px solid var(--border);
-              border-radius: 6px; padding: 10px 12px; font-size: 12px;
-              margin-top: 12px; }
-    .detail h3 { margin: 0 0 6px; font-size: 13px; }
+              border-radius: 6px; padding: 10px 12px; font-size: 12px; }
+    .detail h3 { margin: 0 0 6px; font-size: 13px; color: #fff; word-break: break-all; }
     .detail .row { display: flex; justify-content: space-between; gap: 8px;
                    padding: 2px 0; color: var(--muted); }
     .detail .row b { color: var(--text); font-weight: 500; }
     .detail .neighbors { margin-top: 8px; padding-top: 8px;
                          border-top: 1px solid var(--border); }
     .detail .neighbors ul { margin: 4px 0 0 0; padding-left: 16px; }
-    .footer { position: absolute; bottom: 8px; right: 12px; font-size: 10px;
-              color: var(--muted); }
   </style>
 </head>
 <body>
   <header>
     <h1>ErrorDet</h1>
     <span class="badge">IoT Topology</span>
-    <span class="stat" id="stat-devices">Devices: <b>—</b></span>
-    <span class="stat" id="stat-edges">Edges: <b>—</b></span>
-    <span class="stat" id="stat-pending">Pending review: <b>—</b></span>
+    
+    <button class="kpi-card active" data-filter="all">
+      <span>Devices:</span> <b id="stat-devices">—</b>
+    </button>
+    <button class="kpi-card" data-filter="online">
+      <span class="dot online"></span> <span>Online:</span> <b id="stat-online">—</b>
+    </button>
+    <button class="kpi-card" data-filter="degraded">
+      <span class="dot degraded"></span> <span>Degraded:</span> <b id="stat-degraded">—</b>
+    </button>
+    <button class="kpi-card" data-filter="offline">
+      <span class="dot offline"></span> <span>Offline:</span> <b id="stat-offline">—</b>
+    </button>
+    <button class="kpi-card" data-filter="critical">
+      <span>Critical (24h):</span> <b id="stat-critical">—</b>
+    </button>
+    <button class="kpi-card" data-filter="pending">
+      <span>Pending review:</span> <b id="stat-pending">—</b>
+    </button>
+    
     <span class="spacer"></span>
-    <span class="stat">Sample data — synthetic topology based on the design doc</span>
+    <span class="ws-status disconnected" id="ws-status">● Polling</span>
+    <span class="last-update" id="last-update">Never</span>
   </header>
+  
   <main>
     <div id="graph"></div>
     <aside>
-      <h2>Filters</h2>
-      <div class="controls">
-        <button data-filter="all" class="active">All edges</button>
-        <button data-filter="active">Active only</button>
-        <button data-filter="inferred">Inferred only</button>
-        <button data-filter="review">Needs review</button>
+      <div>
+        <h2>Filter by Device Type</h2>
+        <div class="chips-grid" id="type-chips" style="margin-top: 6px;"></div>
       </div>
-      <input type="text" id="search" placeholder="Search device…" />
 
-      <h2 style="margin-top: 18px;">Legend</h2>
-      <div class="legend-row"><div class="swatch active"></div> Active probe (conf ≥ 0.9)</div>
-      <div class="legend-row"><div class="swatch inferred"></div> Inferred (conf 0.6–0.9)</div>
-      <div class="legend-row"><div class="swatch review"></div> Needs review (conf &lt; 0.6)</div>
+      <div class="drilldown">
+        <h2 id="drilldown-heading">Devices (All)</h2>
+        <input type="text" id="search" class="search-box" placeholder="Filter current list..." />
+        <ul class="device-list" id="device-list"></ul>
 
-      <h2 style="margin-top: 18px;">Devices</h2>
-      <ul class="device-list" id="device-list"></ul>
-
-      <div class="detail" id="detail" style="display:none;">
-        <h3 id="detail-title"></h3>
-        <div id="detail-body"></div>
+        <div class="detail" id="detail" style="display:none;">
+          <h3 id="detail-title"></h3>
+          <div id="detail-body"></div>
+        </div>
       </div>
     </aside>
   </main>
-  <div class="footer">Click a node or device to see its details · drag to rearrange · scroll to zoom</div>
 
-  <script>
-    const GROUP_COLORS = {
-      cisco_switch:   { background: "#1e3a8a", border: "#3b82f6" },
-      cisco_ap:       { background: "#0e7490", border: "#22d3ee" },
-      cisco_wlc:      { background: "#5b21b6", border: "#8b5cf6" },
-      camera:         { background: "#9a3412", border: "#f97316" },
-      nvr:            { background: "#854d0e", border: "#facc15" },
-      vms:            { background: "#7c2d12", border: "#fb923c" },
-      biostar_door:   { background: "#134e4a", border: "#14b8a6" },
-      biostar_server: { background: "#115e59", border: "#2dd4bf" },
-      honeywell_panel:{ background: "#7f1d1d", border: "#ef4444" },
-      auth_server:    { background: "#374151", border: "#9ca3af" },
-      time_server:    { background: "#1f2937", border: "#d1d5db" },
-      unknown:        { background: "#1f2937", border: "#6b7280" },
-    };
-
-    let allData = null;
-    let network = null;
-    let currentFilter = "all";
-    let selectedId = null;
-
-    async function load() {
-      const r = await fetch("sample_topology.json");
-      allData = await r.json();
-      document.getElementById("stat-devices").innerHTML = `Devices: <b>${allData.nodes.length}</b>`;
-      document.getElementById("stat-edges").innerHTML   = `Edges: <b>${allData.edges.length}</b>`;
-      const pending = allData.edges.filter(e => {
-        const m = /conf=([\d.]+)/.exec(e.title);
-        return m && parseFloat(m[1]) < 0.6;
-      }).length;
-      document.getElementById("stat-pending").innerHTML = `Pending review: <b>${pending}</b>`;
-      render();
-      renderDeviceList();
-    }
-
-    function edgeBucket(e) {
-      if (e.color && e.color.color === "#d9534f") return "review";
-      if (e.color && e.color.color === "#f5a623") return "inferred";
-      return "active";
-    }
-
-    function filteredEdges() {
-      if (currentFilter === "all") return allData.edges;
-      return allData.edges.filter(e => edgeBucket(e) === currentFilter);
-    }
-
-    function render() {
-      const visNodes = allData.nodes.map(n => {
-        const g = GROUP_COLORS[n.group] || GROUP_COLORS.unknown;
-        return {
-          id: n.id,
-          label: n.label,
-          title: n.title,
-          color: g,
-          font: { color: "#e6edf7", size: 12, face: "system-ui" },
-          shape: n.group === "cisco_switch" || n.group === "cisco_wlc" ? "box"
-                : n.group === "camera" ? "ellipse"
-                : n.group.includes("biostar") ? "diamond"
-                : "dot",
-          size: n.group === "cisco_switch" ? 22 : 14,
-          borderWidth: 2,
-        };
-      });
-      const visEdges = filteredEdges().map(e => ({ ...e, smooth: { type: "continuous" } }));
-
-      const container = document.getElementById("graph");
-      const data = { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) };
-      const options = {
-        physics: { stabilization: { iterations: 200 }, barnesHut: { gravitationalConstant: -8000 } },
-        interaction: { hover: true, tooltipDelay: 120 },
-        nodes: { shadow: false },
-        edges: { font: { color: "#8aa1c1", size: 10, strokeWidth: 0, align: "middle" } },
-      };
-      if (network) network.destroy();
-      network = new vis.Network(container, data, options);
-      network.on("selectNode", p => selectNode(p.nodes[0]));
-      network.on("deselectNode", () => selectNode(null));
-    }
-
-    function renderDeviceList() {
-      const ul = document.getElementById("device-list");
-      ul.innerHTML = "";
-      allData.nodes
-        .slice()
-        .sort((a, b) => a.label.localeCompare(b.label))
-        .forEach(n => {
-          const li = document.createElement("li");
-          const status = (n.title.match(/status: (\w+)/) || [, "unknown"])[1];
-          li.innerHTML = `<span class="dot ${status}"></span>${n.label}`;
-          li.dataset.id = n.id;
-          li.onclick = () => { network.selectNodes([n.id]); selectNode(n.id); };
-          ul.appendChild(li);
-        });
-    }
-
-    function selectNode(id) {
-      selectedId = id;
-      document.querySelectorAll(".device-list li").forEach(li => {
-        li.classList.toggle("selected", li.dataset.id === id);
-      });
-      const detail = document.getElementById("detail");
-      if (!id) { detail.style.display = "none"; return; }
-      const node = allData.nodes.find(n => n.id === id);
-      const inE  = allData.edges.filter(e => e.to === id);
-      const outE = allData.edges.filter(e => e.from === id);
-      detail.style.display = "block";
-      document.getElementById("detail-title").textContent = node.label;
-      const meta = node.title.replace(/<br\/>/g, " • ");
-      const upstream = inE.map(e => `<li>${e.from} <span style="color:#8aa1c1">— ${e.label}</span></li>`).join("");
-      const downstream = outE.map(e => `<li>${e.to} <span style="color:#8aa1c1">— ${e.label}</span></li>`).join("");
-      document.getElementById("detail-body").innerHTML = `
-        <div class="row"><span>Type</span><b>${node.group}</b></div>
-        <div class="row"><span>Meta</span><b style="font-weight:400;font-size:11px">${meta}</b></div>
-        <div class="neighbors">
-          <b style="color:#8aa1c1">Upstream (${inE.length})</b>
-          <ul>${upstream || "<li style='color:#8aa1c1'>none</li>"}</ul>
-        </div>
-        <div class="neighbors">
-          <b style="color:#8aa1c1">Downstream (${outE.length})</b>
-          <ul>${downstream || "<li style='color:#8aa1c1'>none</li>"}</ul>
-        </div>
-      `;
-    }
-
-    document.querySelectorAll(".controls button").forEach(b => {
-      b.addEventListener("click", () => {
-        document.querySelectorAll(".controls button").forEach(x => x.classList.remove("active"));
-        b.classList.add("active");
-        currentFilter = b.dataset.filter;
-        render();
-        if (selectedId) network.selectNodes([selectedId]);
-      });
-    });
-
-    document.getElementById("search").addEventListener("input", e => {
-      const q = e.target.value.toLowerCase();
-      document.querySelectorAll(".device-list li").forEach(li => {
-        li.style.display = li.textContent.toLowerCase().includes(q) ? "" : "none";
-      });
-    });
-
-    load();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

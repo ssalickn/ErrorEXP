@@ -94,3 +94,123 @@ section h2 { font-size: 18px; margin: 0 0 12px 0; }
   background: #0f172a;
   border-radius: 4px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   DEVICES BY TYPE  (chips + table)
+   ═══════════════════════════════════════════════════════════ */
+
+.muted { color: #94a3b8; font-size: 13px; }
+.error { color: #fca5a5; font-size: 13px; }
+
+.type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+}
+
+.type-chip:hover {
+  background: #1e293b;
+  border-color: #60a5fa;
+}
+
+.type-chip:active { transform: scale(0.97); }
+
+.type-chip.active {
+  background: #1d4ed8;
+  border-color: #60a5fa;
+  color: #fff;
+}
+
+.type-chip .type-count {
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.type-chip.active .type-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.table-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.table-wrap {
+  max-height: 500px;
+  overflow: auto;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0f172a;
+}
+
+.device-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.device-table thead th {
+  position: sticky;
+  top: 0;
+  background: #1e293b;
+  color: #94a3b8;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 10px 12px;
+  border-bottom: 1px solid #334155;
+  white-space: nowrap;
+}
+
+.device-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #1e293b;
+  white-space: nowrap;
+  color: #cbd5e1;
+}
+
+.device-table tbody tr:hover td {
+  background: rgba(96, 165, 250, 0.08);
+}
+
+.device-table tbody tr:last-child td { border-bottom: none; }
+
+.status-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #334155;
+  color: #e2e8f0;
+}
+.status-pill.status-online   { background: rgba(34, 197, 94, 0.2);  color: #22c55e; }
+.status-pill.status-offline  { background: rgba(239, 68, 68, 0.2);  color: #ef4444; }
+.status-pill.status-degraded { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.status-pill.status-unknown  { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
