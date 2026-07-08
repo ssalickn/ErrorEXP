@@ -1,0 +1,10 @@
+# Ignore python cache files
+__pycache__/
+*.pyc
+
+# Ignore environment/credential files (where you might save your SQL passwords)
+.env
+config.json
+
+# Ignore local log files
+*.log
