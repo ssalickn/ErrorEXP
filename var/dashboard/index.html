@@ -25,6 +25,9 @@
     header { padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--border);
              display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     header h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.3px; }
+    header .logo { height: 26px; width: auto; display: block;
+                   background: #ffffff; padding: 3px 8px; border-radius: 3px; }
+    header .brand { display: flex; align-items: center; gap: 10px; }
     header .badge { background: var(--accent); color: #fff; font-size: 11px;
                     padding: 2px 8px; border-radius: 10px; font-weight: 600; }
     
@@ -90,7 +93,10 @@
 </head>
 <body>
   <header>
-    <h1>ErrorDet</h1>
+    <div class="brand">
+      <img class="logo" src="nucor-logo.png" alt="Nucor logo" onerror="this.style.display='none'">
+      <h1>ErrorDet</h1>
+    </div>
     <span class="badge">IoT Topology</span>
     
     <button class="kpi-card active" data-filter="all">
