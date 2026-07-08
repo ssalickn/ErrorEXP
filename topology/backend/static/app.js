@@ -121,9 +121,6 @@ function updateKPIs(kpis) {
   document.getElementById("kpi-total").querySelector(".kpi-value").textContent = kpis.total_devices;
   document.getElementById("kpi-online").querySelector(".kpi-value").textContent = kpis.online;
   document.getElementById("kpi-offline").querySelector(".kpi-value").textContent = kpis.offline;
-  document.getElementById("kpi-degraded").querySelector(".kpi-value").textContent = kpis.degraded;
-  document.getElementById("kpi-edges").querySelector(".kpi-value").textContent = kpis.total_edges;
-  document.getElementById("kpi-critical").querySelector(".kpi-value").textContent = kpis.critical_events_24h;
 }
 
 function addEvent(event) {
