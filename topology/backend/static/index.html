@@ -2,46 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IoT Topology Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div id="app">
-    <header>
-      <h1>🔧 IoT Topology Monitor</h1>
-      <div id="status">
-        <span id="ws-status" class="disconnected">● Disconnected</span>
-        <span id="last-update">Never</span>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <span class="brand-name">Nucor</span>
+        <span class="brand-sub">IoT Topology</span>
+      </div>
+    </div>
+    <nav class="nav">
+      <a class="nav-item active" href="#overview">Overview</a>
+      <a class="nav-item" href="#events">Events</a>
+      <a class="nav-item" href="#drilldown">Drill-down</a>
+      <a class="nav-item" href="#topology">Topology</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="ws-block">
+        <span id="ws-status" class="ws-dot disconnected">Disconnected</span>
+        <span id="last-update" class="last-update">Never updated</span>
+      </div>
+    </div>
+  </aside>
+
+  <main id="app">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Network Operations</p>
+        <h1>Topology Overview</h1>
+        <p class="subtitle">Real-time visibility into connected devices across all sites.</p>
       </div>
     </header>
 
-    <!-- KPI Cards (clickable drill-down) -->
-    <section id="kpis">
-      <button class="kpi-card" id="kpi-total" data-filter="all" title="Show all devices">
-        <span class="kpi-label">Devices</span>
+    <section id="overview" class="kpis">
+      <button class="kpi-card" id="kpi-total" data-filter="all">
+        <span class="kpi-label">Total Devices</span>
         <span class="kpi-value">—</span>
       </button>
-      <button class="kpi-card online" id="kpi-online" data-filter="status:online" title="Show online devices">
+      <button class="kpi-card online" id="kpi-online" data-filter="status:online">
         <span class="kpi-label">Online</span>
         <span class="kpi-value">—</span>
       </button>
-      <button class="kpi-card offline" id="kpi-offline" data-filter="status:offline" title="Show offline devices">
+      <button class="kpi-card offline" id="kpi-offline" data-filter="status:offline">
         <span class="kpi-label">Offline</span>
         <span class="kpi-value">—</span>
       </button>
     </section>
 
-    <!-- Live Event Feed -->
-    <section id="events">
-      <h2>🚨 Live Events</h2>
-      <div id="event-list"></div>
+    <section id="events" class="card">
+      <div class="card-header">
+        <h2>Live Events</h2>
+        <span class="card-meta">Most recent first</span>
+      </div>
+      <div id="event-list" class="event-list"></div>
     </section>
 
-    <!-- Drill-down table (populated by KPI clicks, type chips, or topology node clicks) -->
-    <section id="drilldown">
-      <div class="drilldown-header">
-        <h2>🔎 Drill-down</h2>
-        <div class="drilldown-controls">
+    <section id="drilldown" class="card">
+      <div class="card-header">
+        <h2>Drill-down</h2>
+        <div class="card-controls">
           <span class="muted">Filter by type:</span>
           <div id="device-type-chips" class="type-chips">
             <span class="muted">Loading…</span>
@@ -49,16 +75,18 @@
         </div>
       </div>
       <div id="drilldown-table-container">
-        <p class="muted">Click a KPI card above, a device type, or a node in the topology to see the matching devices here.</p>
+        <p class="muted">Select a KPI, device type, or topology node to view matching devices.</p>
       </div>
     </section>
 
-    <!-- Topology Graph -->
-    <section id="topology">
-      <h2>🕸️ Topology</h2>
-      <svg id="graph" width="100%" height="600"></svg>
+    <section id="topology" class="card">
+      <div class="card-header">
+        <h2>Topology Graph</h2>
+        <span class="card-meta">Device relationships</span>
+      </div>
+      <svg id="graph" width="100%" height="640"></svg>
     </section>
-  </div>
+  </main>
 
   <script src="/static/app.js"></script>
 </body>

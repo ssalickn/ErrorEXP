@@ -52,7 +52,7 @@ function connectWebSocket() {
 function handleMessage(msg) {
   const ts = new Date().toLocaleTimeString();
   document.getElementById("last-update").textContent = `Last update: ${ts}`;
-  
+
   if (msg.type === "event") {
     addEvent(msg.data);
   } else if (msg.type === "kpi_update") {
@@ -107,12 +107,13 @@ async function loadInitialData() {
 
 function updateStatusIndicator() {
   const el = document.getElementById("ws-status");
+  if (!el) return;
   if (state.connected) {
-    el.textContent = "● Connected";
-    el.className = "connected";
+    el.textContent = "Connected";
+    el.className = "ws-dot connected";
   } else {
-    el.textContent = "● Disconnected";
-    el.className = "disconnected";
+    el.textContent = "Disconnected";
+    el.className = "ws-dot disconnected";
   }
 }
 
@@ -136,9 +137,10 @@ function addEvent(event) {
 
 function renderEvents() {
   const container = document.getElementById("event-list");
+  if (!container) return;
   container.innerHTML = state.events.slice(0, 30).map(e => {
     const time = new Date(e.event_time).toLocaleTimeString();
-    const severityClass = ["critical", "error"].includes(e.severity) ? "critical" : 
+    const severityClass = ["critical", "error"].includes(e.severity) ? "critical" :
                           e.severity === "warning" ? "warning" : "info";
     return `
       <div class="event ${severityClass}">
@@ -194,7 +196,7 @@ function renderTopology() {
       line.setAttribute("y1", src.y);
       line.setAttribute("x2", tgt.x);
       line.setAttribute("y2", tgt.y);
-      line.setAttribute("stroke", "#ccc");
+      line.setAttribute("stroke", "#2f3833");
       line.setAttribute("stroke-width", "1");
       edgesGroup.appendChild(line);
     }
@@ -215,20 +217,22 @@ function renderTopology() {
     
     const status = device.status || "unknown";
     const color = {
-      "online": "green",
-      "offline": "red",
-      "degraded": "orange",
-      "unknown": "gray"
-    }[status] || "gray";
+      "online": "#2ea043",
+      "offline": "#c0392b",
+      "degraded": "#b8860b",
+      "unknown": "#7a8580"
+    }[status] || "#7a8580";
     circle.setAttribute("fill", color);
-    circle.setAttribute("stroke", "black");
-    circle.setAttribute("stroke-width", "1");
+    circle.setAttribute("stroke", "#0a0d0c");
+    circle.setAttribute("stroke-width", "1.5");
     
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", pos.x);
-    text.setAttribute("y", pos.y + 20);
+    text.setAttribute("y", pos.y + 22);
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("font-size", "10");
+    text.setAttribute("fill", "#b5bcb8");
+    text.setAttribute("font-family", "Inter, system-ui, sans-serif");
     text.textContent = id.length > 15 ? id.substring(0, 12) + "..." : id;
     
     g.appendChild(circle);
@@ -264,7 +268,7 @@ function flashBrowserNotification(event) {
 // current filter. Clicking the same control again clears the filter.
 // ═══════════════════════════════════════════════════════════
 
-// Active filter shape: { kind: 'all' | 'status' | 'type' | 'device' | 'events' | 'edges', value?: string }
+// Active filter shape: { kind: 'all' | 'status' | 'type' | 'device' | 'events', value?: string }
 let activeFilter = null;
 
 function applyFilter(filter) {
@@ -281,14 +285,6 @@ function applyFilter(filter) {
   if (!activeFilter) {
     clearDrilldown();
     renderDeviceTypeChips(); // refresh active styling on chips
-    return;
-  }
-
-  if (activeFilter.kind === "edges") {
-    // Edges aren't a device table — scroll to the topology section instead
-    document.getElementById("topology")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    clearDrilldown();
-    renderDeviceTypeChips();
     return;
   }
 
@@ -542,7 +538,6 @@ function wireKpiCards() {
       if (!f) return;
       let filter;
       if (f === "all") filter = { kind: "all" };
-      else if (f === "edges") filter = { kind: "edges" };
       else if (f.startsWith("status:")) filter = { kind: "status", value: f.split(":")[1] };
       else if (f.startsWith("events:")) filter = { kind: "events", value: f.split(":")[1], hoursBack: 24 };
       applyFilter(filter);
@@ -557,7 +552,7 @@ loadInitialData = async function () {
   renderDeviceTypeChips();
   wireKpiCards();
   // If a filter is active, re-render the drill-down with the latest data
-  if (activeFilter && activeFilter.kind !== "edges") renderDrilldownTable();
+  if (activeFilter) renderDrilldownTable();
 };
 
 // ═══════════════════════════════════════════════════════════
