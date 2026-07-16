@@ -447,3 +447,60 @@ h1 {
   .kpis { grid-template-columns: 1fr; }
   .event { grid-template-columns: 1fr; gap: 4px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   CASCADES / ROOT-CAUSE
+   ═══════════════════════════════════════════════════════════ */
+
+.cascade-list { display: flex; flex-direction: column; gap: 12px; }
+
+.cascade-item {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.cascade-item .cascade-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.cascade-root {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 600;
+  color: var(--red);
+  font-size: 14px;
+}
+.cascade-conf {
+  background: var(--red-soft);
+  color: var(--red);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--red);
+}
+.cascade-cluster { color: var(--text-3); font-size: 12px; }
+.cascade-explain { color: var(--text-2); font-size: 13px; margin: 6px 0 8px 0; }
+.cascade-item details { margin-top: 6px; }
+.cascade-item summary {
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.cascade-item summary:hover { color: var(--text); }
+.cascade-item ul {
+  margin: 8px 0 0 0;
+  padding: 0 0 0 18px;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.cascade-item ul li { margin: 2px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

@@ -57,6 +57,8 @@ function handleMessage(msg) {
     addEvent(msg.data);
   } else if (msg.type === "kpi_update") {
     updateKPIs(msg.data);
+  } else if (msg.type === "cascade") {
+    addCascade(msg.data);
   } else if (msg.type === "connected") {
     console.log(msg.data.message);
     loadInitialData();
@@ -96,6 +98,11 @@ async function loadInitialData() {
     const events = await fetch("/api/events?limit=50").then(r => r.json());
     state.events = events;
     renderEvents();
+
+    // Load recent AI cascades (root-cause detections)
+    if (typeof loadInitialCascades === "function") {
+      await loadInitialCascades();
+    }
   } catch (e) {
     console.error("Failed to load initial data:", e);
   }
