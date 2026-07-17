@@ -436,6 +436,189 @@ h1 {
 ::-webkit-scrollbar-thumb:hover { background: var(--green-700); }
 
 /* ═══════════════════════════════════════════════════════════
+   AI INSIGHTS (Microsoft Foundry)
+   ═══════════════════════════════════════════════════════════ */
+
+.ai-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green);
+  background: var(--green-soft);
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.ai-badge.ai-error  { color: var(--red);   border-color: var(--red);   background: var(--red-soft); }
+.ai-badge.ai-pending{ color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+
+.ai-insight-list { display: flex; flex-direction: column; gap: 12px; }
+
+.ai-insight {
+  position: relative;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ai-insight.fresh   { animation: aiPulse 2.2s ease-out 1; }
+.ai-insight.failed  { border-left-color: var(--red); }
+.ai-insight.warning { border-left-color: var(--amber); }
+.ai-insight.critical{ border-left-color: var(--red); }
+
+@keyframes aiPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(46,160,67,0.45); }
+  60%  { box-shadow: 0 0 0 14px rgba(46,160,67,0); }
+  100% { box-shadow: 0 0 0 0 rgba(46,160,67,0); }
+}
+
+.ai-insight-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.ai-insight-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ai-insight-device {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+}
+.ai-insight-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ai-insight-summary {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: 8px 0 12px 0;
+  line-height: 1.55;
+}
+.ai-insight-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 900px) {
+  .ai-insight-grid { grid-template-columns: 1fr; }
+}
+.ai-insight-block h4 {
+  margin: 0 0 6px 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.ai-insight-rootcause {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ai-insight-rationale {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.ai-actions {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ai-actions li {
+  position: relative;
+  padding: 4px 0 4px 18px;
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+.ai-actions li::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  color: var(--green);
+  font-size: 11px;
+}
+.ai-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ai-confidence-bar {
+  display: inline-block;
+  width: 60px;
+  height: 5px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.ai-confidence-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  transition: width 0.3s ease;
+}
+.ai-confidence.low > .ai-confidence-bar > span  { background: var(--red); }
+.ai-confidence.mid > .ai-confidence-bar > span  { background: var(--amber); }
+.ai-insight-blast {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.ai-blast-chip {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.ai-error {
+  font-size: 12px;
+  color: var(--red);
+  margin-top: 4px;
+}
+.ai-empty {
+  text-align: center;
+  padding: 24px 12px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ═══════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════ */
 

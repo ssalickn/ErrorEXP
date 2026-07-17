@@ -57,6 +57,8 @@ function handleMessage(msg) {
     addEvent(msg.data);
   } else if (msg.type === "kpi_update") {
     updateKPIs(msg.data);
+  } else if (msg.type === "ai_insight") {
+    handleAIInsightMessage(msg.data);
   } else if (msg.type === "connected") {
     console.log(msg.data.message);
     loadInitialData();
@@ -545,12 +547,169 @@ function wireKpiCards() {
   });
 }
 
+// ═══════════════════════════════════════════════════════════
+// AI INSIGHTS (Microsoft Foundry)
+// ═══════════════════════════════════════════════════════════
+
+const aiState = {
+  insights: [],          // newest first
+  freshIds: new Set(),   // insight_ids to flash on render
+  model: "—",
+  endpoint: "—",
+};
+
+async function loadAIInsights() {
+  const list = document.getElementById("ai-insight-list");
+  if (!list) return;
+  try {
+    const data = await fetch("/api/ai/insights?limit=20").then((r) => r.json());
+    aiState.insights = Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.error("Failed to load AI insights:", e);
+    aiState.insights = [];
+  }
+  // Probe endpoint metadata
+  try {
+    const h = await fetch("/api/ai/health").then((r) => r.json());
+    if (h && h.model) {
+      aiState.model = h.model;
+      const info = document.getElementById("ai-model-info");
+      if (info) info.textContent = `Model: ${h.model}`;
+      const badge = document.getElementById("ai-status-badge");
+      if (badge) {
+        badge.textContent = h.foundry_ok ? "Microsoft Foundry · Online" : "Microsoft Foundry · Unreachable";
+        badge.classList.toggle("ai-error", !h.foundry_ok);
+      }
+    }
+  } catch (_) {
+    // ignore — health endpoint optional
+  }
+  renderAIInsights();
+}
+
+function renderAIInsights() {
+  const list = document.getElementById("ai-insight-list");
+  if (!list) return;
+  if (!aiState.insights.length) {
+    list.innerHTML = '<div class="ai-empty">No AI insights yet. Insights appear here automatically when a device goes offline.</div>';
+    return;
+  }
+  list.innerHTML = aiState.insights.map(insightCardHTML).join("");
+  // Wire up "Re-analyze" buttons
+  list.querySelectorAll("[data-reanalyze]").forEach((btn) => {
+    btn.addEventListener("click", async (ev) => {
+      const devId = ev.currentTarget.getAttribute("data-reanalyze");
+      ev.currentTarget.disabled = true;
+      ev.currentTarget.textContent = "Analyzing…";
+      try {
+        const res = await fetch(`/api/ai/analyze/${encodeURIComponent(devId)}`, { method: "POST" });
+        if (res.ok) {
+          const insight = await res.json();
+          aiState.insights.unshift(insight);
+          aiState.insights = aiState.insights.slice(0, 20);
+          renderAIInsights();
+        } else {
+          ev.currentTarget.textContent = "Failed";
+        }
+      } catch (e) {
+        console.error("Re-analyze failed:", e);
+        ev.currentTarget.textContent = "Failed";
+      }
+    });
+  });
+}
+
+function insightCardHTML(i) {
+  const isFresh = aiState.freshIds.has(i.insight_id);
+  aiState.freshIds.delete(i.insight_id);
+  const sev = (i.severity || "warning").toLowerCase();
+  const sevClass = ["critical", "error"].includes(sev) ? "critical" : sev === "warning" ? "warning" : "";
+  const okClass = i.ok === false ? "failed" : "";
+  const conf = Number(i.confidence || 0);
+  const confPct = Math.round(conf * 100);
+  const confTier = conf >= 0.7 ? "" : conf >= 0.4 ? "mid" : "low";
+
+  const created = i.created_at ? new Date(i.created_at).toLocaleString() : "";
+  const elapsed = i.elapsed_s ? `${Number(i.elapsed_s).toFixed(1)}s` : "";
+
+  const actions = (i.recommended_actions || []).map((a) => `<li>${escapeHtml(a)}</li>`).join("");
+  const blast = (i.blast_radius || [])
+    .slice(0, 12)
+    .map((d) => `<span class="ai-blast-chip">${escapeHtml(d)}</span>`)
+    .join("");
+
+  const rootCause = i.root_cause_device_id && i.root_cause_device_id !== "unknown"
+    ? `<span class="ai-insight-rootcause">
+         <span class="ai-insight-device">${escapeHtml(i.root_cause_device_id)}</span>
+         ${i.root_cause_device_type && i.root_cause_device_type !== "unknown" ? `<span class="muted">(${escapeHtml(i.root_cause_device_type)})</span>` : ""}
+       </span>`
+    : `<span class="muted">Unknown — model could not determine a root cause.</span>`;
+
+  const errorBlock = i.error ? `<div class="ai-error">⚠ ${escapeHtml(i.error)}</div>` : "";
+  const rationale = i.rationale ? `<div class="ai-insight-rationale">${escapeHtml(i.rationale)}</div>` : "";
+  const blastBlock = blast ? `<div class="ai-insight-blast">${blast}</div>` : "";
+
+  return `
+    <article class="ai-insight ${sevClass} ${okClass} ${isFresh ? "fresh" : ""}">
+      <div class="ai-insight-header">
+        <div class="ai-insight-title">
+          <span class="ai-insight-device">${escapeHtml(i.device_id || "unknown")}</span>
+          <span class="status-pill status-${escapeAttr(sev)}">${escapeHtml(sev)}</span>
+        </div>
+        <div class="ai-insight-meta">
+          <span title="created">${escapeHtml(created)}</span>
+          ${elapsed ? `<span>· ${escapeHtml(elapsed)}</span>` : ""}
+          <span class="ai-confidence ${confTier}">
+            confidence
+            <span class="ai-confidence-bar"><span style="width:${confPct}%"></span></span>
+            <span>${confPct}%</span>
+          </span>
+          <button class="clear-btn" data-reanalyze="${escapeAttr(i.device_id || "")}" type="button">↻ Re-analyze</button>
+        </div>
+      </div>
+      <div class="ai-insight-summary">${escapeHtml(i.summary || "(no summary returned)")}</div>
+      <div class="ai-insight-grid">
+        <div class="ai-insight-block">
+          <h4>Root cause</h4>
+          ${rootCause}
+          ${rationale}
+        </div>
+        <div class="ai-insight-block">
+          <h4>Recommended actions</h4>
+          ${actions ? `<ol class="ai-actions">${actions}</ol>` : `<div class="muted">No actions provided.</div>`}
+          ${blastBlock ? `<h4 style="margin-top:10px">Blast radius</h4>${blastBlock}` : ""}
+          ${errorBlock}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function handleAIInsightMessage(insight) {
+  if (!insight || !insight.device_id) return;
+  // If the server already returned a stored insight (with insight_id), flash it
+  if (insight.insight_id) {
+    aiState.freshIds.add(insight.insight_id);
+  }
+  // Replace any existing insight for the same device so the latest is always on top
+  aiState.insights = [
+    insight,
+    ...aiState.insights.filter((x) => x.device_id !== insight.device_id),
+  ].slice(0, 20);
+  renderAIInsights();
+}
+
+document.getElementById("ai-refresh-btn")?.addEventListener("click", () => {
+  loadAIInsights();
+});
+
 // Hook into the existing data load: when devices/topology finish, refresh the chips
 const _origLoadInitialData = loadInitialData;
 loadInitialData = async function () {
   await _origLoadInitialData();
   renderDeviceTypeChips();
   wireKpiCards();
+  await loadAIInsights();
   // If a filter is active, re-render the drill-down with the latest data
   if (activeFilter) renderDrilldownTable();
 };

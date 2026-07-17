@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 
 # Ignore environment/credential files (where you might save your SQL passwords)
-.env
+*.env
 config.json
 
 # Ignore local log files

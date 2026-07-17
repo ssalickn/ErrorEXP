@@ -1,20 +1,109 @@
 """
 Background task that polls the database for new events
-and broadcasts them via WebSocket.
+and broadcasts them via WebSocket. Also triggers Microsoft Foundry
+root-cause analysis when a device goes offline.
 """
 
 import asyncio
 import logging
+import os
+import time
 from datetime import datetime, timedelta
+from threading import Lock
 import pandas as pd
 from backend.database import pool
 from backend.websocket.manager import ws_manager
+from backend.ai.foundry_client import get_client as get_foundry_client
+from backend.ai.context import build_context
+from backend.api.ai import _persist_insight
 
 logger = logging.getLogger(__name__)
 
 # Track last seen event to detect new ones
 _last_event_id: int = 0
 _last_kpi_check: datetime = datetime.utcnow()
+
+# Per-device cooldown so we don't call the model for every redundant event
+_cooldown_lock = Lock()
+_last_analyzed_at: dict[str, float] = {}
+AUTO_ANALYZE = os.environ.get("FOUNDRY_AUTO_ANALYZE", "true").lower() in ("1", "true", "yes")
+COOLDOWN_S = int(os.environ.get("FOUNDRY_ANALYZE_COOLDOWN_MIN", "15")) * 60
+SEVERITY_RANK = {"info": 0, "warning": 1, "error": 2, "critical": 3}
+MIN_SEVERITY = os.environ.get("FOUNDRY_MIN_SEVERITY", "warning")
+MIN_SEVERITY_RANK = SEVERITY_RANK.get(MIN_SEVERITY.lower(), 1)
+
+
+def _should_analyze(device_id: str, status: str | None, severity: str | None) -> bool:
+    if not AUTO_ANALYZE:
+        return False
+    if not device_id:
+        return False
+    # Only trigger on actual offline-ish transitions
+    s = (status or "").lower()
+    sev = (severity or "").lower()
+    is_offline_event = s in ("offline", "down", "unreachable") or sev in ("error", "critical")
+    if not is_offline_event:
+        return False
+    if SEVERITY_RANK.get(sev, 0) < MIN_SEVERITY_RANK and s != "offline":
+        # allow offline status to trigger even if event severity is "info"
+        return False
+    with _cooldown_lock:
+        last = _last_analyzed_at.get(device_id, 0.0)
+        if (time.time() - last) < COOLDOWN_S:
+            return False
+        _last_analyzed_at[device_id] = time.time()
+    return True
+
+
+async def _run_ai_analysis(device_id: str, trigger_event: dict | None = None) -> None:
+    """Build context, call Foundry, persist, and broadcast the insight."""
+    try:
+        loop = asyncio.get_running_loop()
+        ctx = await loop.run_in_executor(None, build_context, device_id)
+        device = ctx.get("device") or {"device_id": device_id, "status": "offline"}
+        client = get_foundry_client()
+        result = await loop.run_in_executor(
+            None,
+            lambda: client.analyze(
+                device=device,
+                recent_events=ctx.get("recent_events", []),
+                upstream=ctx.get("upstream", []),
+                downstream=ctx.get("downstream", []),
+                offline_siblings=ctx.get("offline_siblings", []),
+                site_context=ctx.get("site_context", {}),
+            ),
+        )
+        result["model"] = client.model_deployment
+        stored = await loop.run_in_executor(None, _persist_insight, device, result)
+        if stored is None:
+            # Fall back: synthesize a broadcast payload even if persistence failed
+            stored = {
+                "device_id": device_id,
+                "ok": result.get("ok", False),
+                "summary": result.get("summary"),
+                "root_cause_device_id": result.get("root_cause_device_id"),
+                "root_cause_device_type": result.get("root_cause_device_type"),
+                "confidence": result.get("confidence"),
+                "severity": result.get("severity"),
+                "blast_radius": result.get("blast_radius", []),
+                "recommended_actions": result.get("recommended_actions", []),
+                "rationale": result.get("rationale"),
+                "error": result.get("error"),
+                "model": client.model_deployment,
+                "elapsed_s": result.get("elapsed_s"),
+            }
+        await ws_manager.broadcast({
+            "type": "ai_insight",
+            "data": stored,
+            "timestamp": datetime.utcnow().isoformat(),
+        })
+        logger.info(
+            "AI insight for %s: ok=%s confidence=%.2f root_cause=%s",
+            device_id, stored.get("ok"), stored.get("confidence") or 0.0,
+            stored.get("root_cause_device_id"),
+        )
+    except Exception as e:
+        logger.error("AI analysis failed for %s: %s", device_id, e)
 
 
 async def poll_for_new_events():
@@ -42,7 +131,7 @@ async def poll_for_new_events():
                 
                 if rows:
                     new_max_id = max(row[0] for row in rows)
-                    
+
                     # Broadcast each new event
                     for row in rows:
                         event = {
@@ -61,7 +150,13 @@ async def poll_for_new_events():
                             "timestamp": datetime.utcnow().isoformat(),
                         }
                         await ws_manager.broadcast(event)
-                    
+
+                        # Kick off AI RCA in the background when a device goes offline
+                        if _should_analyze(row[2], row[6], row[4]):
+                            asyncio.create_task(
+                                _run_ai_analysis(row[2], {"log_id": row[0], "severity": row[4]})
+                            )
+
                     _last_event_id = new_max_id
                     logger.info(f"Broadcast {len(rows)} new events. Last ID: {_last_event_id}")
         

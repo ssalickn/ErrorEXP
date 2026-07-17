@@ -110,6 +110,16 @@ class RefreshConfig(BaseModel):
     drift_lift_threshold: float = 5.0
 
 
+class FoundryConfig(BaseModel):
+    project_endpoint: str
+    api_key: str = ""
+    model_deployment: str = "gpt-4o-mini"
+    api_version: str = "2024-05-01-preview"
+    auto_analyze: bool = True
+    analyze_cooldown_min: int = 15
+    min_severity: str = "warning"
+
+
 class LoggingConfig(BaseModel):
     level: str = "INFO"
     json: bool = True
@@ -122,6 +132,10 @@ class Settings(BaseModel):
     discovery: DiscoveryConfig
     confidence: ConfidenceConfig
     refresh: RefreshConfig
+    foundry: FoundryConfig = Field(default_factory=lambda: FoundryConfig(
+        project_endpoint="",
+        api_key="",
+    ))
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
 
