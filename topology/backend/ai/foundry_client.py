@@ -3,7 +3,7 @@ Microsoft Foundry (Azure AI Inference) client for root-cause analysis.
 
 Calls the chat-completions endpoint exposed by the Foundry project:
 
-    POST {project_endpoint}/chat/completions?api-version={api_version}
+    POST {project_endpoint}/openai/v1/chat/completions
     Headers: api-key: <key>   Content-Type: application/json
 
 Returns a structured RCA: summary, root_cause_device, confidence,
@@ -36,6 +36,9 @@ DEFAULT_ENDPOINT = os.environ.get(
     "https://nirnu-itopssmartmonitor.services.ai.azure.com/api/projects/proj-default",
 )
 DEFAULT_KEY = os.environ.get("OPENAI_API_KEY")
+
+# --- FIXED: Added missing defaults to prevent NameError ---
+DEFAULT_MODEL = os.environ.get("FOUNDRY_MODEL_DEPLOYMENT", "gpt-4o") 
 
 SYSTEM_PROMPT = """You are a senior network operations engineer analyzing an IoT/security topology outage.
 
@@ -81,13 +84,11 @@ class FoundryClient:
         endpoint: str = DEFAULT_ENDPOINT,
         api_key: str = DEFAULT_KEY,
         model_deployment: str = DEFAULT_MODEL,
-        api_version: str = DEFAULT_API_VERSION,
         timeout_s: float = 45.0,
     ):
         self.endpoint = endpoint.rstrip("/")
         self.api_key = api_key
         self.model_deployment = model_deployment
-        self.api_version = api_version
         self._client = httpx.Client(timeout=timeout_s)
 
     # ------------------------------------------------------------------
@@ -95,15 +96,14 @@ class FoundryClient:
     # ------------------------------------------------------------------
 
     def _chat_url(self) -> str:
-        # Project endpoint already includes /api/projects/<name>; chat-completions
-        # lives as a sibling route. Strip any trailing path segments past the project
-        # segment so we always call <project_root>/chat/completions.
+        # Normalize endpoint to get the project base path
         base = self.endpoint
-        # Normalize: keep everything up to and including /api/projects/<name>
         m = re.match(r"^(.*?/api/projects/[^/]+)/?.*$", base)
         if m:
             base = m.group(1)
-        return f"{base}/chat/completions?api-version={self.api_version}"
+        
+        # FIXED: Routed to the standard /openai/v1 path to avoid 400 "API version not supported"
+        return f"{base}/openai/v1/chat/completions"
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -135,7 +135,9 @@ class FoundryClient:
         wait=wait_exponential(multiplier=1, min=1, max=8),
     )
     def _post_chat(self, messages: list[dict[str, str]], temperature: float = 0.2) -> str:
+        # Note: In the OpenAI v1 REST spec, the model parameter must be passed in the body
         body = {
+            "model": self.model_deployment,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": 900,
