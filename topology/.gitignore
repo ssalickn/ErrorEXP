@@ -1,10 +1,20 @@
-# Ignore python cache files
-__pycache__/
-*.pyc
-
-# Ignore environment/credential files (where you might save your SQL passwords)
+# Environment files
+.env
+.env.*
 *.env
-config.json
 
-# Ignore local log files
-*.log
+# Local settings containing secrets
+settings.yaml
+settings.env
+
+# Ignore config files with secrets anywhere
+**/settings.yaml
+**/settings.env
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Logs
+*.log**/.env
