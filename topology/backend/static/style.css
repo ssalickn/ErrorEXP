@@ -630,3 +630,124 @@ h1 {
   .kpis { grid-template-columns: 1fr; }
   .event { grid-template-columns: 1fr; gap: 4px; }
 }
+/* Dismiss X in the top right of each AI insight card */
+.ai-insight {
+  position: relative;
+}
+
+.ai-insight-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  z-index: 2;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.ai-insight-dismiss:hover {
+  background: rgba(192, 57, 43, 0.12);
+  color: #c0392b;
+}
+
+.ai-insight-dismiss:focus-visible {
+  outline: 2px solid #2ea043;
+  outline-offset: 2px;
+}
+
+.ai-insight.dismissing {
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+/* HITL confidence editor */
+.ai-conf-editor {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.ai-conf-editor.editing {
+  background: rgba(46, 160, 67, 0.05);
+  border-color: rgba(46, 160, 67, 0.3);
+}
+.ai-conf-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+.ai-conf-slider {
+  width: 100%;
+  margin: 6px 0;
+  accent-color: #2ea043;
+}
+.ai-conf-notes {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: inherit;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+.ai-conf-notes:focus {
+  outline: 2px solid #2ea043;
+  outline-offset: 1px;
+}
+.ai-conf-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ai-conf-actions .clear-btn.primary {
+  background: #2ea043;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.ai-conf-actions .clear-btn.primary:hover {
+  background: #3cc159;
+}
+.ai-conf-actions .clear-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.ai-delta-up   { color: #2ea043; font-weight: 500; }
+.ai-delta-down { color: #c0392b; font-weight: 500; }
+.ai-feedback-notes {
+  font-style: italic;
+  color: #b5bcb8;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+.ai-tag-rated {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(46, 160, 67, 0.18);
+  color: #2ea043;
+  margin-left: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}

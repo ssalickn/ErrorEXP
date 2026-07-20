@@ -7,6 +7,12 @@ from typing import List
 import pandas as pd
 from backend.database import pool
 from backend.models import TopologyEdge
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="pandas only supports SQLAlchemy connectable",
+)
+
 
 router = APIRouter(prefix="/api/topology", tags=["topology"])
 
@@ -38,10 +44,10 @@ def get_graph_data():
             """, conn)
             
             edges_df = pd.read_sql("""
-                SELECT source_id, target_id, relationship_type,
-                       source_port, confidence, source
+                SELECT source_id, target_id, relationship_type, confidence
                 FROM iot.v_active_topology
             """, conn)
+
         
         return {
             "nodes": nodes_df.to_dict(orient="records"),

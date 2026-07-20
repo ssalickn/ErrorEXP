@@ -65,7 +65,6 @@ function handleMessage(msg) {
   }
 }
 
-// Keep-alive ping
 setInterval(() => {
   if (state.connected) {
     state.ws.send("ping");
@@ -78,23 +77,19 @@ setInterval(() => {
 
 async function loadInitialData() {
   try {
-    // Load KPIs
     const kpis = await fetch("/api/kpis").then(r => r.json());
     updateKPIs(kpis);
     
-    // Load devices
     const devices = await fetch("/api/devices?limit=1000").then(r => r.json());
     devices.forEach(d => state.devices.set(d.device_id, d));
     renderDeviceList();
     
-    // Load topology
     const graphData = await fetch("/api/topology/graph").then(r => r.json());
     state.edges = graphData.edges;
     state.devices.clear();
     graphData.nodes.forEach(n => state.devices.set(n.device_id, n));
     renderTopology();
     
-    // Load recent events
     const events = await fetch("/api/events?limit=50").then(r => r.json());
     state.events = events;
     renderEvents();
@@ -131,7 +126,6 @@ function addEvent(event) {
   if (state.events.length > 100) state.events.pop();
   renderEvents();
   
-  // Flash if critical
   if (event.severity === "critical" || event.severity === "error") {
     flashBrowserNotification(event);
   }
@@ -163,7 +157,6 @@ function renderTopology() {
   const svg = document.getElementById("graph");
   svg.innerHTML = "";
   
-  // Simple force-directed-like layout (positions by type)
   const positions = new Map();
   const typeGroups = {};
   
@@ -175,7 +168,6 @@ function renderTopology() {
   const types = Object.keys(typeGroups);
   const typesPerRow = Math.ceil(Math.sqrt(types.length));
   
-  let x = 0, y = 0;
   types.forEach((type, i) => {
     typeGroups[type].forEach((id, j) => {
       const col = i % typesPerRow;
@@ -187,7 +179,6 @@ function renderTopology() {
     });
   });
   
-  // Draw edges
   const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
   state.edges.forEach(edge => {
     const src = positions.get(edge.source_id);
@@ -205,7 +196,6 @@ function renderTopology() {
   });
   svg.appendChild(edgesGroup);
   
-  // Draw nodes
   state.devices.forEach((device, id) => {
     const pos = positions.get(id);
     if (!pos) return;
@@ -240,7 +230,6 @@ function renderTopology() {
     g.appendChild(circle);
     g.appendChild(text);
     
-    // Tooltip
     const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
     title.textContent = `${id}\nType: ${device.device_type}\nStatus: ${status}`;
     g.appendChild(title);
@@ -262,41 +251,31 @@ function flashBrowserNotification(event) {
 
 // ═══════════════════════════════════════════════════════════
 // DRILL-DOWN
-// Unified table that can be populated by:
-//   - KPI card clicks       (e.g. "Online" → status:online devices)
-//   - Device-type chip clicks (e.g. "switch" → all switches)
-//   - Topology node clicks  (a single device)
-// Filters are mutually exclusive: clicking a new control replaces the
-// current filter. Clicking the same control again clears the filter.
 // ═══════════════════════════════════════════════════════════
 
-// Active filter shape: { kind: 'all' | 'status' | 'type' | 'device' | 'events', value?: string }
 let activeFilter = null;
 
 function applyFilter(filter) {
-  // Toggle off if same filter is clicked again
   if (activeFilter && filter && activeFilter.kind === filter.kind && activeFilter.value === filter.value) {
     activeFilter = null;
   } else {
     activeFilter = filter;
   }
 
-  // Update KPI card "selected" styling
   document.querySelectorAll(".kpi-card").forEach((el) => el.classList.remove("kpi-active"));
 
   if (!activeFilter) {
     clearDrilldown();
-    renderDeviceTypeChips(); // refresh active styling on chips
+    renderDeviceTypeChips();
     return;
   }
 
-  // Highlight the matching KPI card
   if (activeFilter.kind === "all" || activeFilter.kind === "status" || activeFilter.kind === "events") {
     const kpi = document.querySelector(`.kpi-card[data-filter="${cssEscapeAttr(activeFilter.kind + (activeFilter.value ? ":" + activeFilter.value : ""))}"]`);
     if (kpi) kpi.classList.add("kpi-active");
   }
 
-  renderDeviceTypeChips(); // refresh chip active styling
+  renderDeviceTypeChips();
   renderDrilldownTable();
 }
 
@@ -344,7 +323,6 @@ async function renderDrilldownTable() {
   const container = document.getElementById("drilldown-table-container");
   if (!container || !activeFilter) return;
 
-  // Title for the panel
   let title = "";
   if (activeFilter.kind === "all") title = "All devices";
   else if (activeFilter.kind === "status") title = `Devices with status: ${activeFilter.value}`;
@@ -380,12 +358,10 @@ async function renderDrilldownTable() {
 }
 
 async function renderDevicesTable(container, title) {
-  // Build query string from active filter
   const params = new URLSearchParams();
   params.set("limit", "10000");
   if (activeFilter.kind === "status") params.set("status", activeFilter.value);
   else if (activeFilter.kind === "type") params.set("device_type", activeFilter.value);
-  // "all" and "device" → no filter (we'll filter client-side for the single device)
 
   const res = await fetch(`/api/devices?${params.toString()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -528,11 +504,9 @@ async function renderEventsTable(container, title) {
 }
 
 function cssEscapeAttr(s) {
-  // For the [data-filter="..."] attribute selector; safe for the values we use
   return s.replace(/"/g, '\\"');
 }
 
-// Wire up KPI card clicks
 function wireKpiCards() {
   document.querySelectorAll(".kpi-card").forEach((card) => {
     card.addEventListener("click", () => {
@@ -548,14 +522,15 @@ function wireKpiCards() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// AI INSIGHTS (Microsoft Foundry)
+// AI INSIGHTS (Microsoft Foundry) + HITL Feedback
 // ═══════════════════════════════════════════════════════════
 
 const aiState = {
-  insights: [],          // newest first
-  freshIds: new Set(),   // insight_ids to flash on render
+  insights: [],
+  freshIds: new Set(),
   model: "—",
   endpoint: "—",
+  editing: new Set(),   // insight_ids currently being edited
 };
 
 async function loadAIInsights() {
@@ -568,7 +543,6 @@ async function loadAIInsights() {
     console.error("Failed to load AI insights:", e);
     aiState.insights = [];
   }
-  // Probe endpoint metadata
   try {
     const h = await fetch("/api/ai/health").then((r) => r.json());
     if (h && h.model) {
@@ -582,7 +556,7 @@ async function loadAIInsights() {
       }
     }
   } catch (_) {
-    // ignore — health endpoint optional
+    // ignore
   }
   renderAIInsights();
 }
@@ -595,18 +569,24 @@ function renderAIInsights() {
     return;
   }
   list.innerHTML = aiState.insights.map(insightCardHTML).join("");
-  // Wire up "Re-analyze" buttons
+
+  // Re-analyze buttons
   list.querySelectorAll("[data-reanalyze]").forEach((btn) => {
     btn.addEventListener("click", async (ev) => {
       const devId = ev.currentTarget.getAttribute("data-reanalyze");
       ev.currentTarget.disabled = true;
       ev.currentTarget.textContent = "Analyzing…";
       try {
-        const res = await fetch(`/api/ai/analyze/${encodeURIComponent(devId)}`, { method: "POST" });
+        const res = await fetch(
+          `/api/ai/analyze/${encodeURIComponent(devId)}?force=true&replace=true`,
+          { method: "POST" }
+        );
         if (res.ok) {
           const insight = await res.json();
-          aiState.insights.unshift(insight);
-          aiState.insights = aiState.insights.slice(0, 20);
+          aiState.insights = [
+            insight,
+            ...aiState.insights.filter((x) => x.device_id !== insight.device_id),
+          ].slice(0, 20);
           renderAIInsights();
         } else {
           ev.currentTarget.textContent = "Failed";
@@ -617,6 +597,177 @@ function renderAIInsights() {
       }
     });
   });
+
+  // Dismiss (X) buttons
+  list.querySelectorAll("[data-dismiss]").forEach((btn) => {
+    btn.addEventListener("click", async (ev) => {
+      const insightId = ev.currentTarget.getAttribute("data-dismiss");
+      if (!insightId) return;
+      const card = ev.currentTarget.closest(".ai-insight");
+      if (card) card.classList.add("dismissing");
+      try {
+        const res = await fetch(`/api/ai/insights/${encodeURIComponent(insightId)}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          if (card) card.classList.remove("dismissing");
+          console.error("Dismiss failed:", res.status);
+          return;
+        }
+        aiState.insights = aiState.insights.filter((x) => String(x.insight_id) !== String(insightId));
+        renderAIInsights();
+      } catch (e) {
+        console.error("Dismiss failed:", e);
+        if (card) card.classList.remove("dismissing");
+      }
+    });
+  });
+
+  // HITL feedback: edit
+  list.querySelectorAll("[data-edit-conf]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      const id = parseInt(ev.currentTarget.getAttribute("data-edit-conf"), 10);
+      aiState.editing.add(id);
+      renderAIInsights();
+    });
+  });
+
+  // HITL feedback: cancel
+  list.querySelectorAll("[data-cancel-conf]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      const id = parseInt(ev.currentTarget.getAttribute("data-cancel-conf"), 10);
+      aiState.editing.delete(id);
+      renderAIInsights();
+    });
+  });
+
+  // HITL feedback: live slider
+  list.querySelectorAll("[data-conf-slider]").forEach((slider) => {
+    slider.addEventListener("input", (ev) => {
+      const id = ev.currentTarget.getAttribute("data-conf-slider");
+      const pct = Number(ev.currentTarget.value);
+      const bar = document.getElementById(`ai-conf-bar-${id}`);
+      const lbl = document.getElementById(`ai-conf-pct-${id}`);
+      if (bar) bar.style.width = `${pct}%`;
+      if (lbl) lbl.textContent = `${pct}%`;
+    });
+  });
+
+  // HITL feedback: save
+  list.querySelectorAll("[data-save-conf]").forEach((btn) => {
+    btn.addEventListener("click", async (ev) => {
+      const id = ev.currentTarget.getAttribute("data-save-conf");
+      const slider = document.querySelector(`[data-conf-slider="${id}"]`);
+      const notesEl = document.querySelector(`[data-conf-notes="${id}"]`);
+      if (!slider) return;
+      const human_confidence = Number(slider.value) / 100;
+      const notes = notesEl ? notesEl.value.trim() : "";
+
+      ev.currentTarget.disabled = true;
+      ev.currentTarget.textContent = "Saving…";
+      try {
+        const res = await fetch(`/api/ai/insights/${id}/feedback`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ human_confidence, feedback_notes: notes || null }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const updated = await res.json();
+        aiState.editing.delete(parseInt(id, 10));
+        const idx = aiState.insights.findIndex((x) => String(x.insight_id) === String(id));
+        if (idx >= 0) aiState.insights[idx] = updated;
+        renderAIInsights();
+      } catch (e) {
+        console.error("Save feedback failed:", e);
+        ev.currentTarget.disabled = false;
+        ev.currentTarget.textContent = "Save";
+      }
+    });
+  });
+
+  // HITL feedback: reset
+  list.querySelectorAll("[data-clear-conf]").forEach((btn) => {
+    btn.addEventListener("click", async (ev) => {
+      const id = ev.currentTarget.getAttribute("data-clear-conf");
+      if (!confirm("Reset to model confidence? Your rating and notes will be cleared.")) return;
+      try {
+        const res = await fetch(`/api/ai/insights/${id}/feedback`, { method: "DELETE" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const updated = await fetch(`/api/ai/insights/${id}`).then((r) => r.json());
+        const idx = aiState.insights.findIndex((x) => String(x.insight_id) === String(id));
+        if (idx >= 0) aiState.insights[idx] = updated;
+        renderAIInsights();
+      } catch (e) {
+        console.error("Reset feedback failed:", e);
+      }
+    });
+  });
+}
+
+function confidenceEditorHTML(i) {
+  const isEditing = aiState.editing.has(i.insight_id);
+  const modelConf = Number(i.confidence || 0);
+  const humanConf = i.human_confidence != null ? Number(i.human_confidence) : null;
+  const effective = i.effective_confidence != null ? Number(i.effective_confidence) : modelConf;
+  const delta = humanConf != null ? humanConf - modelConf : 0;
+  const notes = i.feedback_notes || "";
+
+  if (!isEditing) {
+    const humanRow = humanConf != null
+      ? `<div class="ai-conf-row">
+           <span class="muted">Your rating:</span>
+           <span class="ai-confidence"><span class="ai-confidence-bar"><span style="width:${Math.round(humanConf * 100)}%"></span></span>${Math.round(humanConf * 100)}%</span>
+           <span class="${delta > 0 ? "ai-delta-up" : delta < 0 ? "ai-delta-down" : "muted"}">
+             ${delta > 0 ? "+" : ""}${Math.round(delta * 100)}% vs model
+           </span>
+           ${notes ? `<div class="ai-feedback-notes">"${escapeHtml(notes)}"</div>` : ""}
+         </div>`
+      : "";
+
+    return `
+      <div class="ai-conf-editor">
+        <div class="ai-conf-row">
+          <span class="muted">Model:</span>
+          <span class="ai-confidence"><span class="ai-confidence-bar"><span style="width:${Math.round(modelConf * 100)}%"></span></span>${Math.round(modelConf * 100)}%</span>
+        </div>
+        ${humanRow}
+        <div class="ai-conf-actions">
+          <button class="clear-btn" data-edit-conf="${escapeAttr(String(i.insight_id))}" type="button">✎ Adjust confidence</button>
+          ${humanConf != null ? `<button class="clear-btn" data-clear-conf="${escapeAttr(String(i.insight_id))}" type="button">Reset</button>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="ai-conf-editor editing">
+      <div class="ai-conf-row">
+        <span class="muted">Model: ${Math.round(modelConf * 100)}%</span>
+        <span class="muted">→</span>
+        <span>Your rating:</span>
+        <span class="ai-confidence"><span class="ai-confidence-bar"><span id="ai-conf-bar-${i.insight_id}" style="width:${Math.round(effective * 100)}%"></span></span>
+          <span id="ai-conf-pct-${i.insight_id}">${Math.round(effective * 100)}%</span>
+        </span>
+      </div>
+      <input
+        type="range"
+        min="0" max="100" step="1"
+        value="${Math.round(effective * 100)}"
+        data-conf-slider="${escapeAttr(String(i.insight_id))}"
+        class="ai-conf-slider"
+      />
+      <textarea
+        data-conf-notes="${escapeAttr(String(i.insight_id))}"
+        class="ai-conf-notes"
+        placeholder="Why this rating? (optional — e.g. 'model missed the cascading PoE failure on the upstream switch')"
+        rows="2"
+      >${escapeHtml(notes)}</textarea>
+      <div class="ai-conf-actions">
+        <button class="clear-btn primary" data-save-conf="${escapeAttr(String(i.insight_id))}" type="button">Save</button>
+        <button class="clear-btn" data-cancel-conf="${escapeAttr(String(i.insight_id))}" type="button">Cancel</button>
+      </div>
+    </div>
+  `;
 }
 
 function insightCardHTML(i) {
@@ -625,12 +776,13 @@ function insightCardHTML(i) {
   const sev = (i.severity || "warning").toLowerCase();
   const sevClass = ["critical", "error"].includes(sev) ? "critical" : sev === "warning" ? "warning" : "";
   const okClass = i.ok === false ? "failed" : "";
-  const conf = Number(i.confidence || 0);
+  const conf = Number(i.effective_confidence != null ? i.effective_confidence : (i.confidence || 0));
   const confPct = Math.round(conf * 100);
   const confTier = conf >= 0.7 ? "" : conf >= 0.4 ? "mid" : "low";
 
   const created = i.created_at ? new Date(i.created_at).toLocaleString() : "";
   const elapsed = i.elapsed_s ? `${Number(i.elapsed_s).toFixed(1)}s` : "";
+  const ratedTag = i.has_feedback ? `<span class="ai-tag-rated">human-rated</span>` : "";
 
   const actions = (i.recommended_actions || []).map((a) => `<li>${escapeHtml(a)}</li>`).join("");
   const blast = (i.blast_radius || [])
@@ -651,10 +803,18 @@ function insightCardHTML(i) {
 
   return `
     <article class="ai-insight ${sevClass} ${okClass} ${isFresh ? "fresh" : ""}">
+      <button
+        class="ai-insight-dismiss"
+        data-dismiss="${escapeAttr(String(i.insight_id || ""))}"
+        type="button"
+        title="Dismiss this insight"
+        aria-label="Dismiss insight"
+      >×</button>
       <div class="ai-insight-header">
         <div class="ai-insight-title">
           <span class="ai-insight-device">${escapeHtml(i.device_id || "unknown")}</span>
           <span class="status-pill status-${escapeAttr(sev)}">${escapeHtml(sev)}</span>
+          ${ratedTag}
         </div>
         <div class="ai-insight-meta">
           <span title="created">${escapeHtml(created)}</span>
@@ -679,6 +839,8 @@ function insightCardHTML(i) {
           ${actions ? `<ol class="ai-actions">${actions}</ol>` : `<div class="muted">No actions provided.</div>`}
           ${blastBlock ? `<h4 style="margin-top:10px">Blast radius</h4>${blastBlock}` : ""}
           ${errorBlock}
+          <h4 style="margin-top:12px">Human feedback</h4>
+          ${confidenceEditorHTML(i)}
         </div>
       </div>
     </article>
@@ -687,11 +849,9 @@ function insightCardHTML(i) {
 
 function handleAIInsightMessage(insight) {
   if (!insight || !insight.device_id) return;
-  // If the server already returned a stored insight (with insight_id), flash it
   if (insight.insight_id) {
     aiState.freshIds.add(insight.insight_id);
   }
-  // Replace any existing insight for the same device so the latest is always on top
   aiState.insights = [
     insight,
     ...aiState.insights.filter((x) => x.device_id !== insight.device_id),
@@ -703,14 +863,12 @@ document.getElementById("ai-refresh-btn")?.addEventListener("click", () => {
   loadAIInsights();
 });
 
-// Hook into the existing data load: when devices/topology finish, refresh the chips
 const _origLoadInitialData = loadInitialData;
 loadInitialData = async function () {
   await _origLoadInitialData();
   renderDeviceTypeChips();
   wireKpiCards();
   await loadAIInsights();
-  // If a filter is active, re-render the drill-down with the latest data
   if (activeFilter) renderDrilldownTable();
 };
 

@@ -63,14 +63,26 @@ def get_recent_events(device_id: str, hours_back: int = 24, limit: int = 30) -> 
 
 
 def get_dependencies(device_id: str, depth: int = 3) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Returns (upstream, downstream) using the recursive CTE already used elsewhere."""
+    """Returns (upstream, downstream) using a recursive CTE.
+
+    Note: SQL Server is strict about UNION types in recursive CTEs. Both
+    the anchor and recursive parts MUST cast string literals to the same
+    type/length, otherwise you get:
+        "Types don't match between the anchor and the recursive part in column 'direction'"
+    """
     query = """
     WITH deps AS (
-        SELECT target_id AS related_id, 1 AS depth, 'downstream' AS direction
+        SELECT
+            CAST(target_id AS NVARCHAR(128)) AS related_id,
+            1 AS depth,
+            CAST('downstream' AS NVARCHAR(16)) AS direction
         FROM iot.device_relationships
         WHERE source_id = ? AND valid_to IS NULL
         UNION ALL
-        SELECT source_id, d.depth + 1, 'upstream'
+        SELECT
+            CAST(r.source_id AS NVARCHAR(128)),
+            d.depth + 1,
+            CAST('upstream' AS NVARCHAR(16))
         FROM iot.device_relationships r
         JOIN deps d ON r.target_id = d.related_id
         WHERE r.valid_to IS NULL AND d.depth < ?
@@ -95,6 +107,7 @@ def get_dependencies(device_id: str, depth: int = 3) -> tuple[list[dict[str, Any
         else:
             downstream.append(rec)
     return upstream, downstream
+
 
 
 def get_offline_siblings(limit: int = 30) -> list[dict[str, Any]]:
@@ -163,6 +176,9 @@ def get_site_summary() -> dict[str, Any]:
 
 def build_context(device_id: str) -> dict[str, Any]:
     device = get_device(device_id) or {"device_id": device_id, "status": "offline"}
+    # Normalize device_type to the closed set before handing to the LLM
+    if device.get("device_type"):
+        device["device_type"] = _normalize_device_type_inplace(device["device_type"])
     recent = get_recent_events(device_id)
     upstream, downstream = get_dependencies(device_id)
     siblings = get_offline_siblings()
@@ -175,3 +191,22 @@ def build_context(device_id: str) -> dict[str, Any]:
         "offline_siblings": siblings,
         "site_context": site,
     }
+
+
+def _normalize_device_type_inplace(t):
+    """Apply closed-set aliases to a single device_type string."""
+    aliases = {
+        "biostar_reader": "biometric_reader",
+        "biostar_panel": "access_control_panel",
+        "biostar_ap": "access_point",
+        "honeywell_camera": "camera",
+        "hikvision_nvr": "nvr",
+        "genetec_nvr": "nvr",
+        "avigilon_nvr": "nvr",
+        "cisco_cat": "cisco_switch",
+        "cisco_nexus": "cisco_switch",
+        "switch": "cisco_switch",
+    }
+    if not t:
+        return t
+    return aliases.get(str(t).strip().lower(), str(t).strip().lower())

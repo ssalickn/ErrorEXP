@@ -7,6 +7,12 @@ from typing import List, Optional
 import pandas as pd
 from backend.database import pool
 from backend.models import Device
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="pandas only supports SQLAlchemy connectable",
+)
+
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
