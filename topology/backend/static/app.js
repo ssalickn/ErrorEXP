@@ -23,26 +23,26 @@ const state = {
 function connectWebSocket() {
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${location.host}/ws/live`;
-  
+
   state.ws = new WebSocket(wsUrl);
-  
+
   state.ws.onopen = () => {
     state.connected = true;
     updateStatusIndicator();
     console.log("WebSocket connected");
   };
-  
+
   state.ws.onclose = () => {
     state.connected = false;
     updateStatusIndicator();
     console.log("WebSocket disconnected, retrying in 3s...");
     setTimeout(connectWebSocket, 3000);
   };
-  
+
   state.ws.onerror = (err) => {
     console.error("WebSocket error:", err);
   };
-  
+
   state.ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     handleMessage(msg);
@@ -79,17 +79,17 @@ async function loadInitialData() {
   try {
     const kpis = await fetch("/api/kpis").then(r => r.json());
     updateKPIs(kpis);
-    
+
     const devices = await fetch("/api/devices?limit=1000").then(r => r.json());
     devices.forEach(d => state.devices.set(d.device_id, d));
     renderDeviceList();
-    
+
     const graphData = await fetch("/api/topology/graph").then(r => r.json());
     state.edges = graphData.edges;
     state.devices.clear();
     graphData.nodes.forEach(n => state.devices.set(n.device_id, n));
     renderTopology();
-    
+
     const events = await fetch("/api/events?limit=50").then(r => r.json());
     state.events = events;
     renderEvents();
@@ -125,7 +125,7 @@ function addEvent(event) {
   state.events.unshift(event);
   if (state.events.length > 100) state.events.pop();
   renderEvents();
-  
+
   if (event.severity === "critical" || event.severity === "error") {
     flashBrowserNotification(event);
   }
@@ -137,7 +137,7 @@ function renderEvents() {
   container.innerHTML = state.events.slice(0, 30).map(e => {
     const time = new Date(e.event_time).toLocaleTimeString();
     const severityClass = ["critical", "error"].includes(e.severity) ? "critical" :
-                          e.severity === "warning" ? "warning" : "info";
+      e.severity === "warning" ? "warning" : "info";
     return `
       <div class="event ${severityClass}">
         <span class="event-time">${time}</span>
@@ -156,18 +156,18 @@ function renderDeviceList() {
 function renderTopology() {
   const svg = document.getElementById("graph");
   svg.innerHTML = "";
-  
+
   const positions = new Map();
   const typeGroups = {};
-  
+
   state.devices.forEach((d, id) => {
     if (!typeGroups[d.device_type]) typeGroups[d.device_type] = [];
     typeGroups[d.device_type].push(id);
   });
-  
+
   const types = Object.keys(typeGroups);
   const typesPerRow = Math.ceil(Math.sqrt(types.length));
-  
+
   types.forEach((type, i) => {
     typeGroups[type].forEach((id, j) => {
       const col = i % typesPerRow;
@@ -178,7 +178,7 @@ function renderTopology() {
       });
     });
   });
-  
+
   const edgesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
   state.edges.forEach(edge => {
     const src = positions.get(edge.source_id);
@@ -195,18 +195,18 @@ function renderTopology() {
     }
   });
   svg.appendChild(edgesGroup);
-  
+
   state.devices.forEach((device, id) => {
     const pos = positions.get(id);
     if (!pos) return;
-    
+
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    
+
     const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("cx", pos.x);
     circle.setAttribute("cy", pos.y);
     circle.setAttribute("r", 8);
-    
+
     const status = device.status || "unknown";
     const color = {
       "online": "#2ea043",
@@ -217,7 +217,7 @@ function renderTopology() {
     circle.setAttribute("fill", color);
     circle.setAttribute("stroke", "#0a0d0c");
     circle.setAttribute("stroke-width", "1.5");
-    
+
     const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.setAttribute("x", pos.x);
     text.setAttribute("y", pos.y + 22);
@@ -226,14 +226,14 @@ function renderTopology() {
     text.setAttribute("fill", "#b5bcb8");
     text.setAttribute("font-family", "Inter, system-ui, sans-serif");
     text.textContent = id.length > 15 ? id.substring(0, 12) + "..." : id;
-    
+
     g.appendChild(circle);
     g.appendChild(text);
-    
+
     const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
     title.textContent = `${id}\nType: ${device.device_type}\nStatus: ${status}`;
     g.appendChild(title);
-    
+
     svg.appendChild(g);
   });
 }
@@ -351,6 +351,12 @@ async function renderDrilldownTable() {
     } else {
       await renderDevicesTable(container, title);
     }
+
+    document.getElementById("drilldown").scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
   } catch (e) {
     console.error("Failed to load drill-down:", e);
     container.innerHTML = `<p class="error">Failed to load: ${escapeHtml(String(e))}</p>`;
