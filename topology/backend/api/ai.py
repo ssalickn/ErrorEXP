@@ -61,7 +61,7 @@ SELECT TOP 1 insight_id, created_at, device_id, device_type, summary,
        root_cause_device_id, root_cause_device_type, confidence, severity,
        blast_radius_json, recommended_actions_json, rationale, ok, error,
        model, elapsed_s
-FROM iot.ai_insights
+FROM iot.incidents
 WHERE device_id = ?
 ORDER BY created_at DESC, insight_id DESC
 """

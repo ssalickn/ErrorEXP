@@ -1,10 +1,12 @@
 """
 Microsoft Foundry (Azure AI Inference) client for root-cause analysis.
 
-Calls the chat-completions endpoint exposed by the Foundry project:
+Mirrors the foun.py proof-of-concept which successfully hits the same endpoint
+using the native OpenAI SDK's ``responses`` API (not ``chat.completions``):
 
-    POST {project_endpoint}/openai/v1/chat/completions
-    Headers: api-key: <key>   Content-Type: application/json
+    POST {project_endpoint}/openai/v1/responses
+    Headers: Authorization: Bearer <key>   Content-Type: application/json
+    Body:    { "model": "<deployment>", "input": "...", "instructions": "..." }
 
 Returns a structured RCA: summary, root_cause_device, confidence,
 recommended_actions[], severity. Robust to non-JSON or partial replies
@@ -20,7 +22,7 @@ import time
 from dotenv import load_dotenv
 from typing import Any, Optional
 
-import httpx
+from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 load_dotenv()
@@ -30,15 +32,19 @@ logger = logging.getLogger(__name__)
 # Severity ordering — used to decide which events warrant AI analysis
 SEVERITY_RANK = {"info": 0, "warning": 1, "error": 2, "critical": 3}
 
-# Default values from config/settings.yaml (overridable via env)
+# Defaults — match the working foun.py configuration
 DEFAULT_ENDPOINT = os.environ.get(
     "FOUNDRY_PROJECT_ENDPOINT",
-    "https://nirnu-itopssmartmonitor.services.ai.azure.com/api/projects/proj-default",
+    "https://nirnu-itopssmartmonitor.services.ai.azure.com/openai/v1",
 )
-DEFAULT_KEY = os.environ.get("OPENAI_API_KEY")
-
-# --- FIXED: Added missing defaults to prevent NameError ---
-DEFAULT_MODEL = os.environ.get("FOUNDRY_MODEL_DEPLOYMENT", "gpt-4o") 
+DEFAULT_KEY = (
+    os.environ.get("FOUNDRY_API_KEY")
+    or os.environ.get("AZURE_OPENAI_API_KEY")
+    or os.environ.get("OPENAI_API_KEY")
+)
+DEFAULT_MODEL = os.environ.get(
+    "FOUNDRY_MODEL_DEPLOYMENT", "NirnuSmartMonitor_GPT"
+)
 
 SYSTEM_PROMPT = """You are a senior network operations engineer analyzing an IoT/security topology outage.
 
@@ -77,7 +83,7 @@ Rules:
 
 
 class FoundryClient:
-    """Thin synchronous client over the Foundry chat-completions REST API."""
+    """Thin synchronous client over the Foundry Responses API (OpenAI SDK)."""
 
     def __init__(
         self,
@@ -89,27 +95,28 @@ class FoundryClient:
         self.endpoint = endpoint.rstrip("/")
         self.api_key = api_key
         self.model_deployment = model_deployment
-        self._client = httpx.Client(timeout=timeout_s)
+
+        if not self.api_key:
+            raise RuntimeError(
+                "No API key found. Set FOUNDRY_API_KEY (or OPENAI_API_KEY) in your env / .env."
+            )
+
+        # Azure AI Foundry /openai/v1 uses the `api-key` header, not `Authorization: Bearer`.
+        # Pass a placeholder api_key so the SDK never emits Bearer, then attach the real
+        # key via default_headers.
+        self._client = OpenAI(
+            base_url=self.endpoint,
+            api_key="placeholder",
+            timeout=timeout_s,
+            default_headers={"api-key": self.api_key},
+        )
+
+
+
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-
-    def _chat_url(self) -> str:
-        # Normalize endpoint to get the project base path
-        base = self.endpoint
-        m = re.match(r"^(.*?/api/projects/[^/]+)/?.*$", base)
-        if m:
-            base = m.group(1)
-        
-        # FIXED: Routed to the standard /openai/v1 path to avoid 400 "API version not supported"
-        return f"{base}/openai/v1/chat/completions"
-
-    def _headers(self) -> dict[str, str]:
-        return {
-            "Content-Type": "application/json",
-            "api-key": self.api_key,
-        }
 
     def _extract_json(self, text: str) -> dict[str, Any]:
         """Tolerate markdown code fences and stray prose around the JSON body."""
@@ -129,33 +136,52 @@ class FoundryClient:
             logger.warning("Failed to parse Foundry JSON: %s | text=%r", e, text[:400])
             return {}
 
+    def _extract_text(self, response: Any) -> str:
+        """Pull the assistant text out of a Responses API object.
+
+        ``response.output`` is a list of output items. Message-type items
+        carry ``.content`` which is itself a list of parts; each part with
+        a ``.text`` attribute contributes the visible reply. We ignore
+        non-message items (e.g. reasoning traces) and concatenate any
+        message text we find.
+        """
+        parts: list[str] = []
+        for item in (getattr(response, "output", None) or []):
+            content = getattr(item, "content", None)
+            if not content:
+                continue
+            for c in content:
+                txt = getattr(c, "text", None)
+                if txt:
+                    parts.append(txt)
+        return "\n".join(parts).strip()
+
     @retry(
         reraise=True,
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=8),
     )
-    def _post_chat(self, messages: list[dict[str, str]], temperature: float = 0.2) -> str:
-        # Note: In the OpenAI v1 REST spec, the model parameter must be passed in the body
-        body = {
-            "model": self.model_deployment,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": 900,
-            "response_format": {"type": "json_object"},
-        }
-        url = self._chat_url()
-        logger.info("Calling Foundry chat-completions: %s (model=%s)", url, self.model_deployment)
-        resp = self._client.post(url, headers=self._headers(), json=body)
-        if resp.status_code >= 400:
-            # Retry on 5xx / 429; raise on 4xx
-            if resp.status_code in (408, 425, 429) or resp.status_code >= 500:
-                raise RuntimeError(f"Foundry transient error {resp.status_code}: {resp.text[:200]}")
-            raise RuntimeError(f"Foundry client error {resp.status_code}: {resp.text[:300]}")
-        data = resp.json()
-        choices = data.get("choices") or []
-        if not choices:
-            raise RuntimeError(f"Foundry returned no choices: {data}")
-        return choices[0].get("message", {}).get("content", "") or ""
+    def _post_response(self, user_input: str, temperature: float = 0.2) -> str:
+        """Call the Responses API — same pattern as foun.py."""
+        logger.info(
+            "Calling Foundry Responses API: model=%s endpoint=%s",
+            self.model_deployment,
+            self.endpoint,
+        )
+        response = self._client.responses.create(
+            model=self.model_deployment,
+            instructions=SYSTEM_PROMPT,  # system / role instructions
+            input=user_input,            # user payload (string)
+            temperature=temperature,
+            max_output_tokens=900,
+        )
+        text = self._extract_text(response)
+        if not text:
+            # Surface a clear error so retry / fallback logic can react
+            raise RuntimeError(
+                f"Foundry returned no text content. raw={response!r}"
+            )
+        return text
 
     # ------------------------------------------------------------------
     # Public API
@@ -164,13 +190,7 @@ class FoundryClient:
     def ping(self) -> bool:
         """Health check — does a trivial completion."""
         try:
-            out = self._post_chat(
-                messages=[
-                    {"role": "system", "content": "Reply with the single word: ok"},
-                    {"role": "user", "content": "ping"},
-                ],
-                temperature=0.0,
-            )
+            out = self._post_response("Reply with the single word: ok", temperature=0.0)
             return bool(out and out.strip())
         except Exception as e:
             logger.warning("Foundry ping failed: %s", e)
@@ -195,19 +215,14 @@ class FoundryClient:
             "other_offline_devices": offline_siblings[:30],
             "site_context": site_context or {},
         }
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": (
-                    "Perform a root-cause analysis for the following outage. "
-                    "Return ONLY a JSON object matching the schema.\n\n"
-                    f"DATA:\n{json.dumps(user_payload, default=str, indent=2)}"
-                ),
-            },
-        ]
+        user_input = (
+            "Perform a root-cause analysis for the following outage. "
+            "Return ONLY a JSON object matching the schema.\n\n"
+            f"DATA:\n{json.dumps(user_payload, default=str, indent=2)}"
+        )
+
         try:
-            raw = self._post_chat(messages)
+            raw = self._post_response(user_input)
         except Exception as e:
             logger.error("Foundry call failed: %s", e)
             return {
@@ -253,7 +268,9 @@ class FoundryClient:
             "severity": str(parsed.get("severity") or device.get("status") or "warning"),
             "blast_radius": [str(x) for x in (parsed.get("blast_radius") or [])],
             "recommended_actions": [
-                str(x).strip() for x in (parsed.get("recommended_actions") or []) if str(x).strip()
+                str(x).strip()
+                for x in (parsed.get("recommended_actions") or [])
+                if str(x).strip()
             ][:6],
             "rationale": str(parsed.get("rationale") or "").strip(),
             "elapsed_s": round(time.time() - started, 2),
