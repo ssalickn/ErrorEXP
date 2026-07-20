@@ -13,6 +13,10 @@ from pathlib import Path
 from backend.api import devices, topology, events, kpis, ai
 from backend.websocket.manager import ws_manager
 from backend.websocket.poller import start_background_tasks, initialize_state
+from backend.api import stats
+
+
+
 
 # Logging
 logging.basicConfig(
@@ -54,7 +58,7 @@ app.include_router(topology.router)
 app.include_router(events.router)
 app.include_router(kpis.router)
 app.include_router(ai.router)
-
+app.include_router(stats.router)
 
 # ═══════════════════════════════════════════════════════════
 # WebSocket endpoint

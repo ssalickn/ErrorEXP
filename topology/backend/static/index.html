@@ -20,6 +20,7 @@
       <a class="nav-item" href="#ai-insights">AI Insights</a>
       <a class="nav-item" href="#drilldown">Drill-down</a>
       <a class="nav-item" href="#topology">Topology</a>
+      <a class="nav-item" href="#stats">Stats</a>
     </nav>
     <div class="sidebar-footer">
       <div class="ws-block">
@@ -73,6 +74,23 @@
         <p class="muted">No AI insights yet. Insights appear here automatically when a device goes offline.</p>
       </div>
     </section>
+
+      <section id="stats" class="card">
+    <div class="card-header">
+      <h2>Plant Statistics</h2>
+      <div class="card-controls">
+        <span class="muted">Group by:</span>
+        <button class="type-chip" data-stats-group="device_type" id="stats-group-type">Device Type</button>
+        <button class="type-chip" data-stats-group="vendor" id="stats-group-vendor">Vendor</button>
+        <button class="type-chip" data-stats-group="site_id" id="stats-group-site">Site</button>
+        <button class="clear-btn" id="stats-refresh-btn" type="button">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="stats-content">
+      <p class="muted">Loading stats…</p>
+    </div>
+  </section>
+
 
     <section id="drilldown" class="card">
       <div class="card-header">

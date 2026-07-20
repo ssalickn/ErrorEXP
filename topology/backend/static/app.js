@@ -522,6 +522,132 @@ function wireKpiCards() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// PLANT STATISTICS
+// ═══════════════════════════════════════════════════════════
+
+const statsState = {
+  groupBy: "device_type",
+  data: null,
+};
+
+async function loadStats() {
+  const container = document.getElementById("stats-content");
+  if (!container) return;
+  container.innerHTML = '<p class="muted">Loading…</p>';
+
+  try {
+    const res = await fetch(`/api/stats?group_by=${encodeURIComponent(statsState.groupBy)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    statsState.data = await res.json();
+    renderStats();
+  } catch (e) {
+    console.error("Failed to load stats:", e);
+    container.innerHTML = `<p class="error">Failed to load stats: ${escapeHtml(String(e))}</p>`;
+  }
+}
+
+function renderStats() {
+  const container = document.getElementById("stats-content");
+  if (!container || !statsState.data) return;
+  if (statsState.data.ok === false) {
+    container.innerHTML = `<p class="error">Stats error: ${escapeHtml(statsState.data.error || "unknown")}</p>`;
+    return;
+  }
+
+  // Highlight active group button
+  document.querySelectorAll("[data-stats-group]").forEach((b) => {
+    b.classList.toggle("active", b.getAttribute("data-stats-group") === statsState.groupBy);
+  });
+
+  const t = statsState.data.totals.devices;
+  const ev = statsState.data.totals.events_24h;
+  const breakdown = statsState.data.breakdown || [];
+
+  container.innerHTML = `
+    <div class="stats-summary">
+      ${statCardHTML("Total devices", t.total, "muted", "")}
+      ${statCardHTML("Online", t.online, "ok", `${t.online_pct}%`)}
+      ${statCardHTML("Offline", t.offline, t.offline > 0 ? "bad" : "muted", `${t.offline_pct}%`)}
+      ${statCardHTML("Degraded", t.degraded, t.degraded > 0 ? "warn" : "muted", `${t.degraded_pct}%`)}
+      ${statCardHTML("Events 24h", ev.total, ev.critical > 0 ? "bad" : ev.error > 0 ? "warn" : "muted", `${ev.critical}c · ${ev.error}e · ${ev.warning}w`)}
+    </div>
+
+    <div class="stats-breakdown">
+      <table class="device-table">
+        <thead>
+          <tr>
+            <th>${escapeHtml(statsState.groupBy.replace("_", " "))}</th>
+            <th>Total</th>
+            <th>Online</th>
+            <th>Offline</th>
+            <th>Degraded</th>
+            <th>Unknown</th>
+            <th>Online %</th>
+            <th>Offline %</th>
+            <th>Events (24h)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${breakdown.map(row => `
+            <tr>
+              <td><strong>${escapeHtml(String(row[statsState.groupBy] ?? "—"))}</strong></td>
+              <td>${row.total}</td>
+              <td><span class="status-pill status-online">${row.online}</span></td>
+              <td>${row.offline > 0 ? `<span class="status-pill status-offline">${row.offline}</span>` : `<span class="muted">${row.offline}</span>`}</td>
+              <td>${row.degraded > 0 ? `<span class="status-pill status-degraded">${row.degraded}</span>` : `<span class="muted">${row.degraded}</span>`}</td>
+              <td class="muted">${row.unknown}</td>
+              <td>${barHTML(row.online_pct, "ok")}</td>
+              <td>${barHTML(row.offline_pct, "bad")}</td>
+              <td>${row.events_24h ? `${row.events_24h.critical}c / ${row.events_24h.error}e / ${row.events_24h.warning}w` : "—"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function statCardHTML(label, value, tone, sublabel) {
+  return `
+    <div class="stat-card stat-${tone}">
+      <div class="stat-value">${value}</div>
+      <div class="stat-label">${escapeHtml(label)}</div>
+      ${sublabel ? `<div class="stat-sub">${escapeHtml(sublabel)}</div>` : ""}
+    </div>
+  `;
+}
+
+function barHTML(pct, tone) {
+  const p = Math.max(0, Math.min(100, Number(pct) || 0));
+  return `
+    <div class="stat-bar" title="${p}%">
+      <div class="stat-bar-fill stat-bar-${tone}" style="width: ${p}%"></div>
+      <span class="stat-bar-label">${p}%</span>
+    </div>
+  `;
+}
+
+// Wire up the group buttons + refresh
+document.querySelectorAll("[data-stats-group]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    statsState.groupBy = btn.getAttribute("data-stats-group");
+    loadStats();
+  });
+});
+
+document.getElementById("stats-refresh-btn")?.addEventListener("click", () => {
+  loadStats();
+});
+
+// Hook into initial load
+const _origLoadStats = loadInitialData;
+loadInitialData = async function () {
+  await _origLoadStats();
+  await loadStats();
+};
+
+
+// ═══════════════════════════════════════════════════════════
 // AI INSIGHTS (Microsoft Foundry) + HITL Feedback
 // ═══════════════════════════════════════════════════════════
 
