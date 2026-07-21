@@ -14,10 +14,84 @@ from typing import Any
 
 import pandas as pd
 from backend.database import pool
+import ipaddress
 
 logger = logging.getLogger(__name__)
 
+def _subnet_of(ip: str | None, prefix_len: int = 24) -> str | None:
+    """Return '10.36.9.0/24' style subnet for an IP. Returns None if invalid."""
+    if not ip:
+        return None
+    try:
+        iface = ipaddress.ip_interface(f"{ip}/255.255.255.0")
+        network = ipaddress.ip_network(f"{iface.ip}/{prefix_len}", strict=False)
+        return str(network)
+    except (ValueError, TypeError):
+        return None
 
+
+def get_subnet_summary() -> dict[str, Any]:
+    """Group currently-offline devices by their /24 subnet.
+
+    Returns:
+        {
+            "by_subnet": [
+                {
+                    "subnet": "10.36.9.0/24",
+                    "total": 32,           # devices with IPs in this subnet
+                    "offline": 8,
+                    "offline_device_ids": ["NI-MPNVR-03-CH09", ...],
+                    "cascade_suspected": True  # >=50% offline
+                }
+            ],
+            "subnets_with_isolated_offline": ["10.36.10.0/24"],  # exactly 1 offline
+        }
+    """
+    try:
+        with pool.get_connection() as conn:
+            df = pd.read_sql("""
+                SELECT
+                    device_id,
+                    device_name,
+                    device_type,
+                    ip_address,
+                    status
+                FROM iot.devices
+                WHERE ip_address IS NOT NULL AND ip_address <> ''
+            """, conn)
+    except Exception as e:
+        logger.warning("get_subnet_summary failed: %s", e)
+        return {"by_subnet": [], "subnets_with_isolated_offline": []}
+
+    if df.empty:
+        return {"by_subnet": [], "subnets_with_isolated_offline": []}
+
+    df["subnet"] = df["ip_address"].apply(_subnet_of)
+    df = df.dropna(subset=["subnet"])
+
+    by_subnet = []
+    isolated_subnets = []
+    for subnet, sub in df.groupby("subnet", dropna=False):
+        total = int(len(sub))
+        offline_mask = sub["status"].fillna("").str.lower() == "offline"
+        offline_n = int(offline_mask.sum())
+        offline_ids = sub.loc[offline_mask, "device_id"].tolist()
+        cascade = offline_n >= max(2, total * 0.5)
+
+        by_subnet.append({
+            "subnet": subnet,
+            "total": total,
+            "offline": offline_n,
+            "offline_device_ids": offline_ids,
+            "cascade_suspected": cascade,
+        })
+
+        if offline_n == 1 and total >= 5:
+            isolated_subnets.append(subnet)
+
+    by_subnet.sort(key=lambda r: (-r["cascade_suspected"], -r["offline"], r["subnet"]))
+    return {"by_subnet": by_subnet, "subnets_with_isolated_offline": isolated_subnets}
+    
 def _df_to_records(df: pd.DataFrame) -> list[dict[str, Any]]:
     if df is None or df.empty:
         return []

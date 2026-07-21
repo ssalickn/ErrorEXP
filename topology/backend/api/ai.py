@@ -15,7 +15,7 @@ GET    /api/ai/stats                             → aggregate AI accuracy stats
 GET    /api/ai/health                            → ping the Foundry endpoint
 """
 from __future__ import annotations
-
+import math
 import json
 import logging
 import os
@@ -29,6 +29,18 @@ from backend.ai.context import build_context
 from backend.ai.foundry_client import get_client
 from backend.database import pool
 import pandas as pd
+
+def _sanitize_for_json(obj):
+    """Recursively replace NaN/Infinity floats with None for JSON safety."""
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_for_json(v) for v in obj]
+    return obj
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -116,6 +128,8 @@ def _row_to_insight(row: tuple) -> dict[str, Any]:
 def _persist_insight(device: dict[str, Any], result: dict[str, Any]) -> Optional[dict[str, Any]]:
     """Insert an insight and return the stored row. Returns None on DB error."""
     try:
+        safe_result = _sanitize_for_json(result)
+        safe_payload = json.dumps(safe_result, default=str)
         with pool.get_connection() as conn:
             cur = conn.cursor()
             row = (
@@ -197,11 +211,11 @@ def _is_insight_fresh(insight_row, device_last_seen) -> bool:
 
 @router.get("/insights")
 def list_insights(limit: int = Query(default=20, le=200)):
-    """List the most recent AI insights (most recent first)."""
     try:
         with pool.get_connection() as conn:
             df = pd.read_sql(_LIST_SQL, conn, params=[limit])
-        return [_row_to_insight(tuple(r)) for r in df.itertuples(index=False, name=None)]
+        rows = [_row_to_insight(tuple(r)) for r in df.itertuples(index=False, name=None)]
+        return _sanitize_for_json(rows)
     except Exception as e:
         logger.warning("list_insights failed: %s", e)
         return []
@@ -437,6 +451,13 @@ def explain_insight(insight_id: int):
             "events_in_last_15m": topology_summary.get("events_in_last_15m", 0),
             "events_in_last_60m": topology_summary.get("events_in_last_60m", 0),
             "cascade_suspected": topology_summary.get("cascade_suspected", False),
+        "network_context": {
+            "target_subnet": nc.get("target_subnet"),
+            "target_subnet_total": nc.get("target_subnet_total"),
+            "target_subnet_offline": nc.get("target_subnet_offline"),
+            "subnet_cascade_suspected": nc.get("subnet_cascade_suspected"),
+            "network_role": nc.get("network_role"),
+        },
         },
     }
 

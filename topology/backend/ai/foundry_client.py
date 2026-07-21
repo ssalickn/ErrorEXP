@@ -24,13 +24,30 @@ import time
 from collections import defaultdict
 from dotenv import load_dotenv
 from typing import Any, Optional
+from backend.ai.context import build_context
+
 
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
+# ── Subnet context ──
+from backend.ai.context import get_subnet_summary
+import ipaddress
+
+def _subnet_of(ip: str | None, prefix_len: int = 24) -> str | None:
+    """Return '10.36.9.0/24' style subnet for an IP. Returns None if invalid."""
+    if not ip:
+        return None
+    try:
+        network = ipaddress.ip_network(f"{ip}/{prefix_len}", strict=False)
+        return str(network)
+    except (ValueError, TypeError):
+        return None
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+
 
 # Severity ordering — used to decide which events warrant AI analysis
 SEVERITY_RANK = {"info": 0, "warning": 1, "error": 2, "critical": 3}
@@ -120,6 +137,21 @@ workstations, no IoT sensors, no UPSes, no environmental monitors, no servers).
 - biometric_reader     (access_control)     — BioStar fingerprint / face readers; template sync to BioStar 2 server
 - access_point         (wireless_access)    — BioStar APs; PoE-powered, controller reachability
 
+# NETWORK TOPOLOGY REASONING (use this to distinguish root cause from victim)
+# When you receive `network_context` in the input, use it as a strong signal:
+#
+# - If the target device's subnet has >=50% of its devices offline, that subnet
+#   is experiencing a cascade. The likely root cause is the SWITCH or NVR
+#   serving that subnet, NOT the individual devices in it.
+# - If multiple subnets are simultaneously cascading, the root cause is likely
+#   a CORE switch or aggregation router upstream of all of them.
+# - If the target device is the ONLY thing offline in its subnet, it's a
+#   LOCAL failure (PoE drop, lock power, firmware crash, dirty reader).
+# - If subnets with cascades exist OUTSIDE the target's subnet, factor them in
+#   — a cross-subnet cascade points to a shared upstream device.
+# - The target_subnet field tells you the /24 subnet. Use it to look up
+#   target_subnet_info which lists every offline device in the same subnet.
+
 # KNOWN FAILURE MODES (cite these in rationale when evidence matches)
 - cisco_switch: stacking member failure, PoE budget exceeded, uplink SFP failure, VLAN trunk misconfig
 - nvr: cold boot requires cameras to re-register AFTER NVR is back; storage full / disk failure; license server unreachable; archive DB corruption
@@ -202,6 +234,12 @@ workstations, no IoT sensors, no UPSes, no environmental monitors, no servers).
 - For camera cascades, the NVR is almost always the root cause, not the cameras.
 - For BioStar cascades, the BioStar 2 server or upstream switch is almost always the root cause.
 - Prefer concrete, executable actions over generic advice.
+- Make use of Subnet & IP Distance Analysis when possible to estimate topology and edge connections. If confidence > 0.8, record this
+relationship within the iot.devices_relationships table for future reference.
+"When analyzing device outages, follow this tie-breaker hierarchy:
+If a single device is offline while site peers are online, and no upstream dependencies exist, YOU MUST DECLARE THE TARGET DEVICE AS THE ROOT CAUSE (Confidence: HIGH).
+Do not hedge with 'upstream/downstream' unless there is simultaneous outage telemetry from network infrastructure.
+If logs are vague (e.g., 'Heartbeat Timeout'), evaluate peer device state: Single failure = Local Endpoint Fault; Multi-device failure = Infrastructure/Upstream Fault."
 """
 
 
@@ -546,8 +584,13 @@ class FoundryClient:
             | downstream_ids
             | sibling_ids
         )
+        subnet_summary = get_subnet_summary()
+        target_subnet = _subnet_of(device.get("ip_address"))
+        target_subnet_info = next(
+        (s for s in subnet_summary.get("by_subnet", []) if s["subnet"] == target_subnet),
+        None,
+)
 
-        # 4. Compose payload
         user_payload = {
             "device_under_investigation": device,
             "recent_events_for_device": recent_events[:30],
@@ -558,7 +601,18 @@ class FoundryClient:
             "topology_summary": topo,
             "local_rca_hypothesis": hypothesis,
             "known_device_ids": sorted(known_device_ids),
+            # ── New network-aware context ──
+            "network_context": {
+                "target_subnet": target_subnet,
+                "target_subnet_info": target_subnet_info,
+                "subnets_with_cascades": [
+                    s for s in subnet_summary.get("by_subnet", [])
+                    if s["cascade_suspected"]
+                ],
+                "isolated_offline_subnets": subnet_summary.get("subnets_with_isolated_offline", []),
+            },
         }
+
 
         user_input = (
             "Perform a root-cause analysis for the following outage. "
@@ -614,6 +668,30 @@ class FoundryClient:
             sibling_ids=sibling_ids,
             known_device_ids=known_device_ids,
         )
+        # Compute and attach network_role for persistence
+        network_role = "unknown"
+        if target_subnet_info:
+            if target_subnet_info["cascade_suspected"]:
+                # If the target is the only thing offline in a cascade subnet,
+                # it could be either the cause or a victim — but the cascade
+                # is the dominant signal.
+                network_role = "victim" if target_subnet_info["offline"] > 1 else "candidate_root_cause"
+            elif target_subnet_info["offline"] == 1:
+                network_role = "isolated"  # single device offline, local cause
+            else:
+                network_role = "downstream"  # other things in this subnet are also failing
+        # Initialize result before populating it
+        result = {}
+
+        # Attach to the insight dict (gets persisted via payload_json)
+        result["network_context"] = {
+            "target_subnet": target_subnet,
+            "target_subnet_total": (target_subnet_info or {}).get("total"),
+            "target_subnet_offline": (target_subnet_info or {}).get("offline"),
+            "subnet_cascade_suspected": bool((target_subnet_info or {}).get("cascade_suspected", False)),
+            "network_role": network_role,
+        }
+
 
         # 6. Severity cross-check: if LLM said "info" but cascade_suspected=True, bump
         if topo.get("cascade_suspected") and parsed.get("severity") == "info":
@@ -713,3 +791,5 @@ def get_client() -> FoundryClient:
     if _client is None:
         _client = FoundryClient()
     return _client
+
+
