@@ -3,16 +3,18 @@ Topology endpoints.
 """
 
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional
 import pandas as pd
+import warnings
 from backend.database import pool
 from backend.models import TopologyEdge
-import warnings
+import re
+import ipaddress
+
 warnings.filterwarnings(
     "ignore",
     message="pandas only supports SQLAlchemy connectable",
 )
-
 
 router = APIRouter(prefix="/api/topology", tags=["topology"])
 
@@ -31,15 +33,65 @@ def list_topology():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def calculate_node_position(device_name: str, ip_address: str, index: int) -> dict:
+    """
+    Derive visual grouping, tier level, and relative (x, y) coordinates
+    from the device name and IP address.
+    """
+    name = device_name or ""
+    
+    # 1. Detect Device Role & Vertical Tier (Y-Axis)
+    # Tier 1 (Y=0): Switches | Tier 2 (Y=200): NVRs | Tier 3 (Y=400): Cameras/Endpoints
+    name_lower = name.lower()
+    if any(k in name_lower for k in ["sw", "switch", "core", "router"]):
+        tier = 1
+        y = 0
+    elif any(k in name_lower for k in ["nvr", "server", "recorder"]):
+        tier = 2
+        y = 200
+    else:
+        tier = 3
+        y = 400
+
+    # 2. Extract Zone / Location Keyword from Device Name (e.g., "Admin Building", "Clarifier")
+    # Matches patterns like "Admin Building SW (S)" or "Clarifier (West)"
+    zone_match = re.search(r"^([^\(-]+)", name)
+    zone = zone_match.group(1).strip() if zone_match else "General Plant"
+
+    # 3. Parse IP Address for Subnet Grouping & Horizontal Alignment (X-Axis)
+    x = index * 150  # Default spacing fallback
+    subnet_key = "1"
+    
+    if ip_address:
+        try:
+            ip_obj = ipaddress.ip_address(ip_address)
+            octets = ip_address.split(".")
+            if len(octets) == 4:
+                subnet_key = octets[2]    # 3rd octet = Subnet / VLAN cluster
+                host_id = int(octets[3])  # 4th octet = Host ID for horizontal ordering
+                
+                # Offset X based on Subnet cluster + host ID position
+                subnet_offset = int(subnet_key) * 1000
+                x = subnet_offset + (host_id * 60)
+        except ValueError:
+            pass
+
+    return {
+        "x": x,
+        "y": y,
+        "tier_level": tier,
+        "zone_group": zone,
+        "subnet": f"Subnet .{subnet_key}"
+    }
+
 
 @router.get("/graph")
 def get_graph_data():
-    """Get topology in graph format (nodes + edges) for visualization."""
+    """Get topology with relative (x, y) positions computed from name & IP."""
     try:
         with pool.get_connection() as conn:
             nodes_df = pd.read_sql("""
-                SELECT device_id, device_name, device_type,
-                       status, site_id
+                SELECT device_id, device_name, device_type, status, site_id, ip_address
                 FROM iot.devices
             """, conn)
             
@@ -48,9 +100,23 @@ def get_graph_data():
                 FROM iot.v_active_topology
             """, conn)
 
-        
+        nodes = nodes_df.to_dict(orient="records")
+
+        # Assign calculated spatial metadata to each node
+        for idx, node in enumerate(nodes):
+            pos_data = calculate_node_position(
+                device_name=node.get("device_name", ""),
+                ip_address=node.get("ip_address", ""),
+                index=idx
+            )
+            # Add spatial coordinates and layout properties directly to node output
+            node["position"] = {"x": pos_data["x"], "y": pos_data["y"]}
+            node["tier_level"] = pos_data["tier_level"]
+            node["zone_group"] = pos_data["zone_group"]
+            node["subnet"] = pos_data["subnet"]
+
         return {
-            "nodes": nodes_df.to_dict(orient="records"),
+            "nodes": nodes,
             "edges": edges_df.to_dict(orient="records"),
         }
     except Exception as e:

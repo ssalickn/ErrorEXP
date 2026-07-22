@@ -1,0 +1,1580 @@
+---
+switches:
+  - id: 181
+    channel: 96
+    name: "Admin Building SW (S)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 9
+    ip: "10.36.9.99"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 180
+    channel: 95
+    name: "Admin Building Middle (S)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 8
+    ip: "10.36.9.98"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 179
+    channel: 94
+    name: "Clarifier (West)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 7
+    ip: "10.36.9.97"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 178
+    channel: 93
+    name: "Clarifier (East)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 6
+    ip: "10.36.9.96"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 177
+    channel: 92
+    name: "Clarifier (North)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 5
+    ip: "10.36.9.95"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 176
+    channel: 91
+    name: "Air Compressor Building (S)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 4
+    ip: "10.36.9.94"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 175
+    channel: 90
+    name: "Air Compressor Building (E)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 3
+    ip: "10.36.9.93"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 174
+    channel: 89
+    name: "South Fence (East)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 2
+    ip: "10.36.9.92"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 173
+    channel: 88
+    name: "South Fence (North)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-03"
+    port: 1
+    ip: "10.36.9.91"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 73
+    channel: 62
+    name: "Admin Camera 17"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 31
+    ip: "10.36.9.81"
+    protocol: "UDP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 72
+    channel: 61
+    name: "Admin Camera 16"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 30
+    ip: "10.36.9.80"
+    protocol: "UDP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 71
+    channel: 60
+    name: "Admin Camera 15"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 29
+    ip: "10.36.9.79"
+    protocol: "UDP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 70
+    channel: 59
+    name: "Admin Camera 14"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 27
+    ip: "10.36.9.78"
+    protocol: "UDP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 69
+    channel: 58
+    name: "Admin Camera 13"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 26
+    ip: "10.36.9.77"
+    protocol: "UDP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 68
+    channel: 57
+    name: "Admin Camera 12"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 25
+    ip: "10.36.9.76"
+    protocol: "TCP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 67
+    channel: 56
+    name: "Admin Camera 11"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 18
+    ip: "10.36.9.75"
+    protocol: "UDP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 172
+    channel: 55
+    name: "Admin Camera 10"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 32
+    ip: "10.36.9.74"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 171
+    channel: 54
+    name: "Admin Camera 9"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 31
+    ip: "10.36.9.73"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 170
+    channel: 53
+    name: "Admin Camera 8"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 30
+    ip: "10.36.9.72"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 167
+    channel: 50
+    name: "Admin Camera 7"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 25
+    ip: "10.36.9.71"
+    protocol: "TCP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 166
+    channel: 49
+    name: "Admin Camera 6"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 20
+    ip: "10.36.9.70"
+    protocol: "TCP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 165
+    channel: 48
+    name: "Admin Camera 5"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 19
+    ip: "10.36.9.69"
+    protocol: "TCP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 169
+    channel: 52
+    name: "Admin Camera 4"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 18
+    ip: "10.36.9.68"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 164
+    channel: 47
+    name: "Admin Camera 3"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 17
+    ip: "10.36.9.67"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 168
+    channel: 51
+    name: "Admin Camera 2"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 13
+    ip: "10.36.9.66"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 163
+    channel: 46
+    name: "Admin Camera 1"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 12
+    ip: "10.36.9.65"
+    protocol: "TCP"
+    model: "H3W2GR1V"
+    status: "Disabled"
+
+  - id: 51
+    channel: 43
+    name: "Chemical Bldg"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 22
+    ip: "10.36.9.64"
+    protocol: "UDP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 34
+    channel: 17
+    name: "East Gate PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 5
+    ip: "10.36.9.63"
+    protocol: "UDP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 152
+    channel: 16
+    name: "NorthEast PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 16
+    ip: "10.36.9.62"
+    protocol: "TCP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 54
+    channel: 20
+    name: "NorthFence PTZ 1"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 8
+    ip: "10.36.9.61"
+    protocol: "UDP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 153
+    channel: 21
+    name: "NorthFence PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 21
+    ip: "10.36.9.60"
+    protocol: "TCP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 159
+    channel: 27
+    name: "Port PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 28
+    ip: "10.36.9.59"
+    protocol: "TCP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 49
+    channel: 41
+    name: "TH2 WestFence South"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 20
+    ip: "10.36.9.58"
+    protocol: "UDP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 39
+    channel: 31
+    name: "West Gate PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 10
+    ip: "10.36.9.57"
+    protocol: "UDP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 161
+    channel: 29
+    name: "SouthFence PTZ 1"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 9
+    ip: "10.36.9.56"
+    protocol: "TCP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 147
+    channel: 7
+    name: "Front PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 7
+    ip: "10.36.9.55"
+    protocol: "TCP"
+    model: "HDZ302DE"
+    status: "Disabled"
+
+  - id: 44
+    channel: 36
+    name: "SouthFence West 2"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 15
+    ip: "10.36.9.54"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 41
+    channel: 33
+    name: "SouthFence East 2"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 12
+    ip: "10.36.9.53"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 52
+    channel: 44
+    name: "SouthFence East 1"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 23
+    ip: "10.36.9.52"
+    protocol: "UDP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 48
+    channel: 40
+    name: "SouthFence West 1"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 19
+    ip: "10.36.9.51"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 38
+    channel: 30
+    name: "West Gate Entrance"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 9
+    ip: "10.36.9.50"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 43
+    channel: 35
+    name: "SouthFence West WGate"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 14
+    ip: "10.36.9.48"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 42
+    channel: 34
+    name: "SouthFence East WGate"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 13
+    ip: "10.36.9.47"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 45
+    channel: 37
+    name: "TH2 West Fence North"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 16
+    ip: "10.36.9.46"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 156
+    channel: 24
+    name: "NorthWest Corner LayDown Yard"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 24
+    ip: "10.36.9.45"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 162
+    channel: 39
+    name: "NorthWest Corner North"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 11
+    ip: "10.36.9.44"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 46
+    channel: 38
+    name: "TH2 Port South Fence"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 17
+    ip: "10.36.9.43"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 50
+    channel: 42
+    name: "TH2 Fence"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 21
+    ip: "10.36.9.42"
+    protocol: "TCP"
+    model: "HBW2GR3V"
+    status: "Disabled"
+
+  - id: 53
+    channel: 45
+    name: "Port Camera"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 24
+    ip: "10.36.9.41"
+    protocol: "UDP"
+    model: "HBW2GR3V"
+    status: "Disabled"
+
+  - id: 160
+    channel: 28
+    name: "Port Gate"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 29
+    ip: "10.36.9.40"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 157
+    channel: 25
+    name: "Port WestFence"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 26
+    ip: "10.36.9.39"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 158
+    channel: 26
+    name: "Port Road Area"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 27
+    ip: "10.36.9.38"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 155
+    channel: 23
+    name: "NorthFence East"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 23
+    ip: "10.36.9.37"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 154
+    channel: 22
+    name: "NorthFence LayDown Yard"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 22
+    ip: "10.36.9.36"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 74
+    channel: 18
+    name: "NorthFence West"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 6
+    ip: "10.36.9.35"
+    protocol: "UDP"
+    model: "HBW2GR1V"
+    status: "Disabled"
+
+  - id: 36
+    channel: 19
+    name: "NorthFence East 1"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-02"
+    port: 7
+    ip: "10.36.9.34"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 148
+    channel: 8
+    name: "South Camera"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 8
+    ip: "10.36.9.33"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 149
+    channel: 10
+    name: "East Fence Line"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 10
+    ip: "10.36.9.32"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 150
+    channel: 14
+    name: "North Fence Line"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 14
+    ip: "10.36.9.31"
+    protocol: "TCP"
+    model: "HBW2GR3V"
+    status: "Disabled"
+
+  - id: 151
+    channel: 15
+    name: "Second East Gate"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 15
+    ip: "10.36.9.30"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 33
+    channel: 13
+    name: "East To North"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 4
+    ip: "10.36.9.29"
+    protocol: "UDP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 32
+    channel: 12
+    name: "South Fence Line"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 3
+    ip: "10.36.9.28"
+    protocol: "UDP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 31
+    channel: 11
+    name: "Facial Camera"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 2
+    ip: "10.36.9.27"
+    protocol: "UDP"
+    model: "H4W4GR1V"
+    status: "Disabled"
+
+  - id: 30
+    channel: 9
+    name: "Carpark Camera"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 1
+    ip: "10.36.9.26"
+    protocol: "UDP"
+    model: "HBW4PR1"
+    status: "Disabled"
+
+  - id: 134
+    channel: 121
+    name: "New DCS Room"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 6
+    ip: "10.36.9.253"
+    protocol: "TCP"
+    model: "H4W4GR1V"
+    status: "Disabled"
+
+  - id: 136
+    channel: 123
+    name: "PG Compressor SW"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 8
+    ip: "10.36.9.251"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 146
+    channel: 5
+    name: "Exit Camera"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 5
+    ip: "10.36.9.25"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 257
+    channel: 180
+    name: "Oxide coating"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 5
+    ip: "10.36.9.249"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 261
+    channel: 183
+    name: "FrontEnd_Loader_Bay"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 15
+    ip: "10.36.9.248"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 259
+    channel: 181
+    name: "NA"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 14
+    ip: "10.36.9.247"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 275
+    channel: 197
+    name: "Camera30"
+    type: "Digital PTZ Camera"
+    nvr: "Warehouse NVR"
+    port: 30
+    ip: "10.36.9.234"
+    protocol: "UDP"
+    model: "HC60WB5R2P"
+    status: "Disabled"
+
+  - id: 274
+    channel: 196
+    name: "Camera29"
+    type: "Digital PTZ Camera"
+    nvr: "Warehouse NVR"
+    port: 29
+    ip: "10.36.9.233"
+    protocol: "UDP"
+    model: "HC60WB5R2P"
+    status: "Disabled"
+
+  - id: 273
+    channel: 195
+    name: "Camera28"
+    type: "Digital PTZ Camera"
+    nvr: "Warehouse NVR"
+    port: 28
+    ip: "10.36.9.232"
+    protocol: "UDP"
+    model: "HC60WB5R2P"
+    status: "Disabled"
+
+  - id: 272
+    channel: 194
+    name: "Camera27"
+    type: "Digital PTZ Camera"
+    nvr: "Warehouse NVR"
+    port: 27
+    ip: "10.36.9.231"
+    protocol: "UDP"
+    model: "HC60WB5R2P"
+    status: "Disabled"
+
+  - id: 271
+    channel: 193
+    name: "Camera26"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 26
+    ip: "10.36.9.230"
+    protocol: "HTTPS"
+    model: "HC60W45R2"
+    status: "Disabled"
+
+  - id: 142
+    channel: 1
+    name: "Guard Booth South"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 1
+    ip: "10.36.9.23"
+    protocol: "TCP"
+    model: "H4W4GR1V"
+    status: "Disabled"
+
+  - id: 270
+    channel: 192
+    name: "Camera25"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 25
+    ip: "10.36.9.229"
+    protocol: "UDP"
+    model: "HC60WB5R2P"
+    status: "Disabled"
+
+  - id: 269
+    channel: 191
+    name: "Camera24"
+    type: "Digital PTZ Camera"
+    nvr: "Warehouse NVR"
+    port: 24
+    ip: "10.36.9.228"
+    protocol: "UDP"
+    model: "HC60WB5R2P"
+    status: "Disabled"
+
+  - id: 268
+    channel: 190
+    name: "Camera23"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 23
+    ip: "10.36.9.227"
+    protocol: "HTTPS"
+    model: "HC60W45R2"
+    status: "Disabled"
+
+  - id: 100
+    channel: 87
+    name: "Camera22"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 22
+    ip: "10.36.9.226"
+    protocol: "HTTPS"
+    model: "HC60W35R2"
+    status: "Disabled"
+
+  - id: 99
+    channel: 86
+    name: "Camera21"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 21
+    ip: "10.36.9.225"
+    protocol: "HTTPS"
+    model: "HC60W35R2"
+    status: "Disabled"
+
+  - id: 98
+    channel: 85
+    name: "Camera20"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 20
+    ip: "10.36.9.224"
+    protocol: "HTTPS"
+    model: "HC60W35R2"
+    status: "Disabled"
+
+  - id: 97
+    channel: 84
+    name: "Camera19"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 19
+    ip: "10.36.9.223"
+    protocol: "HTTPS"
+    model: "HC60W35R2"
+    status: "Disabled"
+
+  - id: 96
+    channel: 83
+    name: "Camera18"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 18
+    ip: "10.36.9.222"
+    protocol: "HTTPS"
+    model: "HC60W35R2"
+    status: "Disabled"
+
+  - id: 95
+    channel: 82
+    name: "Camera17"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 17
+    ip: "10.36.9.221"
+    protocol: "HTTPS"
+    model: "HC60W35R2"
+    status: "Disabled"
+
+  - id: 94
+    channel: 81
+    name: "Camera16"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 16
+    ip: "10.36.9.220"
+    protocol: "HTTPS"
+    model: "HC30WF5R1"
+    status: "Disabled"
+
+  - id: 144
+    channel: 3
+    name: "Entrance Camera"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 3
+    ip: "10.36.9.22"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 93
+    channel: 80
+    name: "Camera15"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 15
+    ip: "10.36.9.219"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 92
+    channel: 79
+    name: "Camera14"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 14
+    ip: "10.36.9.218"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 91
+    channel: 78
+    name: "Camera13"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 13
+    ip: "10.36.9.217"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 90
+    channel: 77
+    name: "Camera12"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 12
+    ip: "10.36.9.216"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 89
+    channel: 76
+    name: "Camera11"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 11
+    ip: "10.36.9.215"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 88
+    channel: 75
+    name: "Camera10"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 10
+    ip: "10.36.9.214"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 87
+    channel: 74
+    name: "Camera9"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 9
+    ip: "10.36.9.213"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 86
+    channel: 73
+    name: "Camera8"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 8
+    ip: "10.36.9.212"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 85
+    channel: 72
+    name: "Camera7"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 7
+    ip: "10.36.9.211"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 84
+    channel: 71
+    name: "Camera6"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 6
+    ip: "10.36.9.210"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 145
+    channel: 4
+    name: "East Carpark Entrance"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 4
+    ip: "10.36.9.21"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 83
+    channel: 70
+    name: "Camera5"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 5
+    ip: "10.36.9.209"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 82
+    channel: 69
+    name: "Camera4"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 4
+    ip: "10.36.9.208"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 81
+    channel: 68
+    name: "Camera3"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 3
+    ip: "10.36.9.207"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 80
+    channel: 67
+    name: "Camera2"
+    type: "Digital Fixed Camera"
+    nvr: "Warehouse NVR"
+    port: 2
+    ip: "10.36.9.206"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 79
+    channel: 66
+    name: "Camera1"
+    type: "Digital PTZ Camera"
+    nvr: "Warehouse NVR"
+    port: 1
+    ip: "10.36.9.205"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 143
+    channel: 2
+    name: "Main Entrance IN"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-01"
+    port: 2
+    ip: "10.36.9.20"
+    protocol: "TCP"
+    model: "HBW4GR1"
+    status: "Disabled"
+
+  - id: 264
+    channel: 186
+    name: "Clarifier Tunnel"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 33
+    ip: "10.36.9.195"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 255
+    channel: 178
+    name: "Polsher West"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 30
+    ip: "10.36.9.194"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 251
+    channel: 174
+    name: "Briquetter Upper Lvl"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 1
+    ip: "10.36.9.193"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 252
+    channel: 175
+    name: "Briquetter Lower Lvl"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 2
+    ip: "10.36.9.192"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 253
+    channel: 176
+    name: "Product Screen 3"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 10
+    ip: "10.36.9.191"
+    protocol: "HTTPS"
+    model: "HC60W45R2"
+    status: "Disabled"
+
+  - id: 254
+    channel: 177
+    name: "Product Screen 4"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 29
+    ip: "10.36.9.190"
+    protocol: "HTTPS"
+    model: "HC60W45R2"
+    status: "Disabled"
+
+  - id: 263
+    channel: 185
+    name: "Clarifier Underflow Pumps"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 32
+    ip: "10.36.9.189"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 258
+    channel: 32
+    name: "West Gate Booth"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-02"
+    port: 11
+    ip: "10.36.9.188"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 256
+    channel: 179
+    name: "Polisher East"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 31
+    ip: "10.36.9.185"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 260
+    channel: 182
+    name: "CV_H41_2"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 24
+    ip: "10.36.9.184"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 250
+    channel: 173
+    name: "CV_F10 Tail"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 57
+    ip: "10.36.9.183"
+    protocol: "HTTPS"
+    model: "HC60W45R2"
+    status: "Disabled"
+
+  - id: 249
+    channel: 172
+    name: "PG Compressors SE (N)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 56
+    ip: "10.36.9.182"
+    protocol: "HTTPS"
+    model: "HC60W45R2"
+    status: "Disabled"
+
+  - id: 248
+    channel: 171
+    name: "PG Compressors (Center)"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-05"
+    port: 55
+    ip: "10.36.9.181"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 247
+    channel: 170
+    name: "PG Compressors N (NE)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 54
+    ip: "10.36.9.180"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 246
+    channel: 169
+    name: "Product Screen 2"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 53
+    ip: "10.36.9.179"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 245
+    channel: 168
+    name: "Product Screen 1"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 52
+    ip: "10.36.9.178"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 244
+    channel: 167
+    name: "UBF South"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 51
+    ip: "10.36.9.177"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 243
+    channel: 166
+    name: "PCR Build. East"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-05"
+    port: 50
+    ip: "10.36.9.176"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 242
+    channel: 165
+    name: "PCR Build. West"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 49
+    ip: "10.36.9.175"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 241
+    channel: 164
+    name: "Furnace DC (Fan Area)"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-05"
+    port: 48
+    ip: "10.36.9.174"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 240
+    channel: 163
+    name: "Feed Legs NW (E)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 47
+    ip: "10.36.9.173"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 239
+    channel: 162
+    name: "Feed Legs SE (W)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 46
+    ip: "10.36.9.172"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 238
+    channel: 161
+    name: "Furnace Top Manway"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 45
+    ip: "10.36.9.171"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 237
+    channel: 160
+    name: "UBF NE"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 44
+    ip: "10.36.9.170"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 236
+    channel: 159
+    name: "Elevator Top Level"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 43
+    ip: "10.36.9.169"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 235
+    channel: 158
+    name: "Feed Legs NE (S)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 42
+    ip: "10.36.9.168"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 234
+    channel: 157
+    name: "Feed Legs SW (N)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 41
+    ip: "10.36.9.167"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 233
+    channel: 156
+    name: "New Maint. WShop NW (SE)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 40
+    ip: "10.36.9.166"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 232
+    channel: 155
+    name: "UBF North"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 39
+    ip: "10.36.9.165"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 231
+    channel: 154
+    name: "New Maint. WShop North Section"
+    type: "Digital Fixed Camera"
+    nvr: "NI-MPNVR-05"
+    port: 38
+    ip: "10.36.9.164"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 230
+    channel: 153
+    name: "Switch Yard West (S)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 37
+    ip: "10.36.9.163"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 229
+    channel: 152
+    name: "New Maint. WShop SE (NW)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 36
+    ip: "10.36.9.162"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 137
+    channel: 124
+    name: "Primary Screen North"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 9
+    ip: "10.36.9.157"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 138
+    channel: 125
+    name: "Secondary Screen South"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 10
+    ip: "10.36.9.156"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 140
+    channel: 127
+    name: "Secondary Screen North"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-04"
+    port: 12
+    ip: "10.36.9.155"
+    protocol: "TCP"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 228
+    channel: 151
+    name: "BFP Building"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 28
+    ip: "10.36.9.154"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 227
+    channel: 150
+    name: "Air Comp. Build. East (Center)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 27
+    ip: "10.36.9.153"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 226
+    channel: 149
+    name: "Air Comp. Build. (E)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 26
+    ip: "10.36.9.152"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 225
+    channel: 148
+    name: "Blow Down RO PTZ"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"
+    port: 25
+    ip: "10.36.9.151"
+    protocol: "HTTPS"
+    model: "HC60WB5R2"
+    status: "Disabled"
+
+  - id: 224
+    channel: 147
+    name: "Surge Bin Manway (Pri. Screen)"
+    type: "Digital PTZ Camera"
+    nvr: "NI-MPNVR-05"

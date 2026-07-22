@@ -1,10 +1,10 @@
 """SNMP/LLDP/CDP active probing (Tier 1A).
 
 Walks a list of Cisco switches, harvests:
-  - lldpRemoteTable  (LLDP-MIB, 1.0.8802.1.1.2.1.4)
-  - cdpCacheTable    (CISCO-CDP-MIB, 1.3.6.1.4.1.9.9.23)
-  - ifTable          (IF-MIB)
-  - dot1dTpFdb       (BRIDGE-MIB)
+  - lldpRemoteTable   (LLDP-MIB, 1.0.8802.1.1.2.1.4)
+  - cdpCacheTable     (CISCO-CDP-MIB, 1.3.6.1.4.1.9.9.23)
+  - ifTable           (IF-MIB)
+  - dot1dTpFdb        (BRIDGE-MIB)
   - ipNetToMediaTable (IP-MIB, for ARP)
 
 Emits discovered edges of types:
@@ -17,6 +17,7 @@ The merger is responsible for writing these into Postgres + Neo4j.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import ipaddress
 import json
 import logging
@@ -146,11 +147,9 @@ def _ip_to_str(val: str) -> str | None:
     if not val:
         return None
     try:
-        # pysnmp prints IpAddress as hex string; convert via inet_ntoa
         from pysnmp.proto.rfc1902 import IpAddress
         return str(IpAddress(val))
     except Exception:
-        # Some agents print dotted-quad directly
         m = re.match(r"(\d+\.\d+\.\d+\.\d+)", val)
         if m:
             return m.group(1)
@@ -164,11 +163,9 @@ def _oid_tail(oid: str, base: str) -> list[int]:
 # ── discovery functions ──────────────────────────────────────────────────────
 def discover_lldp(target: SwitchTarget) -> list[NeighborRecord]:
     """Walk LLDP-MIB and return neighbor records."""
-    # Index from lldpRemTimeMark + lldpRemLocalIfIndex + lldpRemIndex
     rows: dict[tuple, dict] = {}
     for oid, val in _walk(target, LLDP_REM_SYS_NAME):
         idx = _oid_tail(oid, LLDP_REM_SYS_NAME)
-        # idx[0]=timeMark, idx[1]=localIfIndex, idx[2]=remIndex
         k = (idx[1], idx[2])
         rows.setdefault(k, {})["sys_name"] = val
 
@@ -187,7 +184,6 @@ def discover_lldp(target: SwitchTarget) -> list[NeighborRecord]:
         k = (idx[1], idx[2])
         rows.setdefault(k, {})["man_addr"] = _ip_to_str(val)
 
-    # Resolve local ifIndex → port name via ifTable
     if_index_to_name = dict(_walk_if_descr(target))
 
     out: list[NeighborRecord] = []
@@ -212,7 +208,7 @@ def discover_cdp(target: SwitchTarget) -> list[NeighborRecord]:
     rows: dict[tuple, dict] = {}
     for oid, val in _walk(target, CDP_CACHE_DEVICE_ID):
         idx = _oid_tail(oid, CDP_CACHE_DEVICE_ID)
-        k = (idx[0], idx[1])  # cdpCacheIfIndex, cdpCacheDeviceIndex
+        k = (idx[0], idx[1])
         rows.setdefault(k, {})["device"] = val
 
     for oid, val in _walk(target, CDP_CACHE_ADDR):
@@ -261,13 +257,10 @@ def discover_fdb(target: SwitchTarget) -> list[FDBRecord]:
     out: list[FDBRecord] = []
     for oid, val in _walk(target, BRIDGE_FDB_PORT):
         idx = _oid_tail(oid, BRIDGE_FDB_PORT)
-        # idx[0..2] = bridge-domain, idx[3..5] = MAC octets
         mac_bytes = [int(x) for x in val.prettyPrint().split(":")] if hasattr(val, "prettyPrint") else None
         if not mac_bytes or len(mac_bytes) != 6:
             continue
         mac = ":".join(f"{b:02X}" for b in mac_bytes)
-        # The dot1dTpFdbPort is a dot1dBasePort; we need to translate to ifIndex via dot1dBasePortIfIndex
-        # For brevity we record the bridge port; the merger can resolve via SNMP dot1dBasePortIfIndex.
         out.append(FDBRecord(
             switch_device_id=target.device_id,
             mac=mac,
@@ -294,7 +287,6 @@ def _sanitize_device_id(name: str) -> str:
     if not name:
         return ""
     s = name.strip()
-    # Strip domain suffixes
     s = re.sub(r"\..*", "", s)
     s = re.sub(r"[^A-Za-z0-9_\-]", "-", s)
     return s.upper()
@@ -332,7 +324,39 @@ def run(targets: list[SwitchTarget], out_path: Path) -> dict:
 
 def _load_targets(path: Path) -> list[SwitchTarget]:
     raw = yaml.safe_load(path.read_text())
-    return [SwitchTarget(**row) for row in raw["switches"]]
+
+    # Extract target items whether under 'switches', 'devices', or top-level list
+    if isinstance(raw, list):
+        rows = raw
+    elif isinstance(raw, dict):
+        rows = raw.get("switches") or raw.get("devices") or []
+    else:
+        rows = []
+
+    valid_fields = {f.name for f in dataclasses.fields(SwitchTarget)}
+
+    targets = []
+    for idx, row in enumerate(rows):
+        if not isinstance(row, dict):
+            log.warning("Skipping entry #%d: Not a valid dictionary/object", idx)
+            continue
+
+        # Check for mandatory IP field
+        ip_addr = row.get("ip")
+        if not ip_addr:
+            log.warning("Skipping entry #%d (%s): Missing 'ip' address", idx, row.get("name") or row.get("id"))
+            continue
+
+        # Ensure device_id is present (fall back to 'name' or 'id')
+        if "device_id" not in row or not row["device_id"]:
+            row["device_id"] = str(row.get("name") or row.get("id") or f"device_{idx}")
+
+        # Extract only valid dataclass fields, filtering out 'id', 'channel', 'nvr', etc.
+        filtered_row = {k: v for k, v in row.items() if k in valid_fields and v is not None}
+
+        targets.append(SwitchTarget(**filtered_row))
+
+    return targets
 
 
 def main() -> None:

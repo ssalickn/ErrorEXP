@@ -136,7 +136,7 @@ workstations, no IoT sensors, no UPSes, no environmental monitors, no servers).
 - access_control_panel (access_control)     — BioStar panels; Wiegand wiring, lock power, door contacts
 - biometric_reader     (access_control)     — BioStar fingerprint / face readers; template sync to BioStar 2 server
 - access_point         (wireless_access)    — BioStar APs; PoE-powered, controller reachability
-
+- server               (access_control)     — PRTG Network Monitor, part of 'TH' group
 # NETWORK TOPOLOGY REASONING (use this to distinguish root cause from victim)
 # When you receive `network_context` in the input, use it as a strong signal:
 #
@@ -159,6 +159,7 @@ workstations, no IoT sensors, no UPSes, no environmental monitors, no servers).
 - access_control_panel: panel-to-server link down, door contact sensor failure, lock power supply failure, schedule misconfig after BioStar 2 restart
 - biometric_reader: BioStar 2 server unreachable, template sync failure after BioStar restart, reader head dirty/worn, Wiegand wiring fault
 - access_point: PoE drop from upstream switch, controller unreachable, channel interference, firmware mismatch
+- server: timeout error, service crash, network interface down, disk full, license expired
 
 # VENDOR RUNBOOK HINTS (cite in recommended_actions)
 - Cisco switches: 'show stack', 'show power inline', 'show interfaces status', 'show logging'
