@@ -426,15 +426,62 @@ async function renderDevicesTable(container, title) {
     .join("")}</tbody>`;
 
   container.innerHTML = `
-    <div class="table-header">
-      <strong>${escapeHtml(title)}</strong>
-      <span class="muted">${devices.length} device${devices.length === 1 ? "" : "s"}</span>
-      <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
-    </div>
-    <div class="table-wrap">
-      <table class="device-table">${thead}${tbody}</table>
-    </div>
-  `;
+  <div class="table-header">
+    <strong>${escapeHtml(title)}</strong>
+
+    <span class="muted" id="device-count">
+      ${devices.length} device${devices.length === 1 ? "" : "s"}
+    </span>
+
+    <input
+      id="device-search"
+      class="table-search"
+      type="search"
+      placeholder="Search devices..."
+    >
+
+    <button class="clear-btn" id="drilldown-clear">✕ Clear</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="device-table">
+      ${thead}
+      ${tbody}
+    </table>
+  </div>
+`;
+
+  const searchBox = document.getElementById("device-search");
+  const rows = [...container.querySelectorAll("tbody tr")];
+  const counter = document.getElementById("device-count");
+
+  // Cache the text in each row
+  rows.forEach(row => {
+    row.dataset.search = row.textContent.toLowerCase();
+  });
+
+  // Filter as the user types
+  searchBox.addEventListener("input", () => {
+
+    const query = searchBox.value.trim().toLowerCase();
+
+    let visible = 0;
+
+    rows.forEach(row => {
+
+      const match = row.dataset.search.includes(query);
+
+      row.style.display = match ? "" : "none";
+
+      if (match) visible++;
+    });
+
+    counter.textContent =
+      `${visible} of ${devices.length} devices`;
+  });
+
+  // Automatically place the cursor in the search box
+  searchBox.focus();
 
   document.getElementById("drilldown-clear")?.addEventListener("click", () => {
     activeFilter = null;

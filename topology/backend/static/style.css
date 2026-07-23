@@ -355,6 +355,26 @@ h1 {
 }
 .type-chip.active .type-count { background: rgba(46, 160, 67, 0.2); color: var(--green); }
 
+.table-search {
+    margin-left: auto;
+    width: 260px;
+    padding: 8px 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.table-search:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.table-search::placeholder {
+    color: var(--text-3);
+}
+
 .table-header {
   display: flex;
   align-items: center;
