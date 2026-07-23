@@ -41,11 +41,11 @@ except Exception as e:
 
 echo ""
 echo "============================================"
-echo "  Server starting at http://127.0.0.1:8001"
-echo "  API docs at:    http://127.0.0.1:8001/docs"
+echo "  Server starting at http://127.0.0.1:8000"
+echo "  API docs at:    http://127.0.0.1:8000/docs"
 echo "  Press Ctrl+C to stop"
 echo "============================================"
 echo ""
 
 # Start the server
-py -m uvicorn backend.main:app --host 127.0.0.1 --port 8001 --reload
+py -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
