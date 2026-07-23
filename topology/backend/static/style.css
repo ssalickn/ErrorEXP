@@ -844,3 +844,21 @@ h1 {
   color: #fff;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
 }
+
+.zoom-btn {
+  width: 28px;
+  height: 28px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.zoom-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+}

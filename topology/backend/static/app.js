@@ -155,7 +155,16 @@ function renderDeviceList() {
 
 function renderTopology() {
   const svg = document.getElementById("graph");
+
   svg.innerHTML = "";
+
+  // Create zoom container
+  const zoomGroup = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "g"
+  );
+
+  svg.appendChild(zoomGroup);
 
   const positions = new Map();
   const typeGroups = {};
@@ -194,7 +203,7 @@ function renderTopology() {
       edgesGroup.appendChild(line);
     }
   });
-  svg.appendChild(edgesGroup);
+  zoomGroup.appendChild(edgesGroup);
 
   state.devices.forEach((device, id) => {
     const pos = positions.get(id);
@@ -234,7 +243,73 @@ function renderTopology() {
     title.textContent = `${id}\nType: ${device.device_type}\nStatus: ${status}`;
     g.appendChild(title);
 
-    svg.appendChild(g);
+    zoomGroup.appendChild(g);
+  });
+
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+
+  function updateTransform() {
+    zoomGroup.setAttribute(
+      "transform",
+      `translate(${translateX},${translateY}) scale(${scale})`
+    );
+  }
+
+
+  document.getElementById("zoom-in-btn")
+    .addEventListener("click", () => {
+
+      scale += 0.2;
+
+      scale = Math.min(scale, 5);
+
+      updateTransform();
+    });
+
+
+  document.getElementById("zoom-out-btn")
+    .addEventListener("click", () => {
+
+      scale -= 0.2;
+
+      scale = Math.max(scale, 0.2);
+
+      updateTransform();
+    });
+
+
+  // Drag to pan
+  let dragging = false;
+  let startX;
+  let startY;
+
+
+  svg.addEventListener("mousedown", (e) => {
+    dragging = true;
+    startX = e.clientX - translateX;
+    startY = e.clientY - translateY;
+  });
+
+
+  svg.addEventListener("mousemove", (e) => {
+    if (!dragging) return;
+
+    translateX = e.clientX - startX;
+    translateY = e.clientY - startY;
+
+    updateTransform();
+  });
+
+
+  svg.addEventListener("mouseup", () => {
+    dragging = false;
+  });
+
+
+  svg.addEventListener("mouseleave", () => {
+    dragging = false;
   });
 }
 
