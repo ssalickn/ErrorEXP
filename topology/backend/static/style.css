@@ -242,7 +242,7 @@ h1 {
 .card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
@@ -355,6 +355,25 @@ h1 {
 }
 .type-chip.active .type-count { background: rgba(46, 160, 67, 0.2); color: var(--green); }
 
+.table-search {
+    width: 260px;
+    padding: 8px 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.table-search:focus {
+    outline: none;
+    border-color: var(--green);
+}
+
+.table-search::placeholder {
+    color: var(--text-3);
+}
+
 .table-header {
   display: flex;
   align-items: center;
@@ -372,9 +391,9 @@ h1 {
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  margin-left: auto;
   transition: border-color 0.12s, color 0.12s;
 }
+
 .clear-btn:hover { border-color: var(--red); color: var(--red); }
 
 .table-wrap {
