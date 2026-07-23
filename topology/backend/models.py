@@ -35,11 +35,11 @@ class LogEvent(BaseModel):
     event_time: datetime
     device_id: str
     device_type: Optional[str] = None
-    severity: str
+    severity: Optional[str] = None  # Updated
     status_code: Optional[str] = None
     status: Optional[str] = None
     message: Optional[str] = None
-    source_system: str
+    source_system: Optional[str] = None  # Updated
 
 
 class KPIs(BaseModel):

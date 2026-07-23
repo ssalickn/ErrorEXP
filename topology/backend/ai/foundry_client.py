@@ -209,6 +209,9 @@ workstations, no IoT sensors, no UPSes, no environmental monitors, no servers).
 3. List the impacted downstream devices in blast_radius.
 4. Give a 1-6 step recommended_actions plan an on-call tech can execute in <30 min.
 5. Cite evidence in rationale (event messages, time correlation, topology).
+6. Learn from the past history of similar cascades and known failure modes, and cite them in rationale.
+7. Prioritize Human rated feedback in order to improve the current model and understanding of site topology,
+device dependencies and confidence in your outputs.
 
 # OUTPUT SCHEMA (SINGLE JSON object, no prose, no markdown, no code fences)
 {

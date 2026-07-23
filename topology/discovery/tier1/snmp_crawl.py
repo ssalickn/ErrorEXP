@@ -47,7 +47,7 @@ LLDP_REM_MAN_ADDR     = "1.0.8802.1.1.2.1.4.1.1.12"    # lldpRemManAddr
 
 CDP_CACHE_ADDR        = "1.3.6.1.4.1.9.9.23.1.2.1.1.4"  # cdpCacheAddress (type 4 = ip)
 CDP_CACHE_VERSION     = "1.3.6.1.4.1.9.9.23.1.2.1.1.5"  # cdpCacheVersion
-CDP_CACHE_PLATFORM    = "1.3.6.1.4.1.9.9.23.1.2.1.1.7"  # cdpCachePlatform
+CDP_CACHE_PLATFORM    = ".1.3.6.1.4.1.9.9.23.1.2.1.1.2"  # cdpCachePlatform
 CDP_CACHE_DEVICE_PORT = "1.3.6.1.4.1.9.9.23.1.2.1.1.7"  # see cdpCacheDevicePort
 CDP_CACHE_DEVICE_ID   = "1.3.6.1.4.1.9.9.23.1.2.1.1.6"  # cdpCacheDeviceId
 CDP_CACHE_LOCAL_PORT  = "1.3.6.1.4.1.9.9.23.1.2.1.1.3"  # cdpCacheIfIndex (local ifIndex)
@@ -255,17 +255,24 @@ def _walk_if_descr(target: SwitchTarget) -> Iterable[tuple[int, str]]:
 def discover_fdb(target: SwitchTarget) -> list[FDBRecord]:
     if_index_to_name = dict(_walk_if_descr(target))
     out: list[FDBRecord] = []
+    
     for oid, val in _walk(target, BRIDGE_FDB_PORT):
         idx = _oid_tail(oid, BRIDGE_FDB_PORT)
-        mac_bytes = [int(x) for x in val.prettyPrint().split(":")] if hasattr(val, "prettyPrint") else None
-        if not mac_bytes or len(mac_bytes) != 6:
+        if len(idx) < 6:
             continue
-        mac = ":".join(f"{b:02X}" for b in mac_bytes)
+        
+        # MAC is the last 6 integers of the OID index
+        mac_decimal = idx[-6:]
+        mac = ":".join(f"{b:02X}" for b in mac_decimal)
+        
+        # Returned value is the bridge port integer
+        bridge_port = int(val.prettyPrint()) if hasattr(val, "prettyPrint") else int(val)
+        
         out.append(FDBRecord(
             switch_device_id=target.device_id,
             mac=mac,
-            if_index=int(val.prettyPrint()) if hasattr(val, "prettyPrint") else 0,
-            port_name=None,
+            if_index=bridge_port, # Note: Requires dot1dBasePortIfIndex mapping for true ifIndex
+            port_name=if_index_to_name.get(bridge_port)
         ))
     return out
 
