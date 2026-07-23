@@ -1,0 +1,14 @@
+{
+  "target": {
+    "device_id": "SWITCH_10_36_0_91",
+    "ip": "10.36.0.91",
+    "community": "public"
+  },
+  "summary": {
+    "lldp_neighbors_found": 0,
+    "cdp_neighbors_found": 0,
+    "mac_fdb_entries_found": 0
+  },
+  "neighbors": [],
+  "fdb": []
+}
